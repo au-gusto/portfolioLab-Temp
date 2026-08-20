@@ -19,12 +19,13 @@
   --primaria: #4F46E5;
   --primaria-forte: #4338CA;
   --sobre-primaria: #FFFFFF;
-  --secundaria: #0D9488;
-  --secundaria-forte: #0F766E;
+  --secundaria: #16A34A;
+  --secundaria-forte: #15803D;
 
   /* Degradês da marca. Um só para o título e o bloco do logo, outro, mais
      curto, para superfícies que precisam de brilho sem virar arco-íris. */
   --grad-marca: linear-gradient(115deg, #4F46E5 0%, #0EA5E9 48%, #0D9488 100%);
+  --grad-logo: linear-gradient(135deg, #4F46E5 0%, #6366F1 55%, #0EA5E9 100%);
   --grad-acao: linear-gradient(135deg, #4F46E5 0%, #6366F1 55%, #0EA5E9 100%);
   --grad-fio: linear-gradient(90deg, transparent, #4F46E5 18%, #0EA5E9 50%, #0D9488 82%, transparent);
 
@@ -34,6 +35,8 @@
   --halo-forte: rgba(79, 70, 229, 0.30);
   --brilho: 0 6px 18px rgba(79, 70, 229, 0.26);
   --brilho-forte: 0 8px 26px rgba(79, 70, 229, 0.38);
+  --brilho-acao: 0 6px 18px rgba(79, 70, 229, 0.26);
+  --brilho-acao-forte: 0 8px 26px rgba(79, 70, 229, 0.38);
 
   --positivo: #0D9488;
   --negativo: #C2453B;
@@ -101,11 +104,12 @@
     --primaria: #22D3EE;
     --primaria-forte: #67E8F9;
     --sobre-primaria: #04121A;
-    --secundaria: #4ADE80;
-    --secundaria-forte: #86EFAC;
+    --secundaria: #34D399;
+    --secundaria-forte: #6EE7B7;
 
     --grad-marca: linear-gradient(115deg, #22D3EE 0%, #A78BFA 52%, #A3E635 100%);
-    --grad-acao: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
+    --grad-logo: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
+    --grad-acao: linear-gradient(135deg, #15794B 0%, #1E9E63 100%);
     --grad-fio: linear-gradient(90deg, transparent, #22D3EE 18%, #A78BFA 50%, #A3E635 82%, transparent);
 
     --vidro: rgba(11, 15, 21, 0.72);
@@ -113,6 +117,8 @@
     --halo-forte: rgba(34, 211, 238, 0.38);
     --brilho: 0 0 22px rgba(34, 211, 238, 0.28);
     --brilho-forte: 0 0 32px rgba(34, 211, 238, 0.45);
+    --brilho-acao: 0 0 14px rgba(30, 158, 99, 0.26);
+    --brilho-acao-forte: 0 0 20px rgba(30, 158, 99, 0.40);
 
     --positivo: #4ADE80;
     --negativo: #FB7185;
@@ -158,11 +164,12 @@
   --primaria: #22D3EE;
   --primaria-forte: #67E8F9;
   --sobre-primaria: #04121A;
-  --secundaria: #4ADE80;
-  --secundaria-forte: #86EFAC;
+  --secundaria: #34D399;
+  --secundaria-forte: #6EE7B7;
 
   --grad-marca: linear-gradient(115deg, #22D3EE 0%, #A78BFA 52%, #A3E635 100%);
-  --grad-acao: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
+  --grad-logo: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
+  --grad-acao: linear-gradient(135deg, #15794B 0%, #1E9E63 100%);
   --grad-fio: linear-gradient(90deg, transparent, #22D3EE 18%, #A78BFA 50%, #A3E635 82%, transparent);
 
   --vidro: rgba(11, 15, 21, 0.72);
@@ -170,6 +177,8 @@
   --halo-forte: rgba(34, 211, 238, 0.38);
   --brilho: 0 0 22px rgba(34, 211, 238, 0.28);
   --brilho-forte: 0 0 32px rgba(34, 211, 238, 0.45);
+  --brilho-acao: 0 0 14px rgba(30, 158, 99, 0.26);
+  --brilho-acao-forte: 0 0 20px rgba(30, 158, 99, 0.40);
 
   --positivo: #4ADE80;
   --negativo: #FB7185;
@@ -1753,3 +1762,88 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ══ AJUSTES DE INTENSIDADE ══════════════════════════════════════════════════
+   O degradê luminoso ficou só no logo. Botão e aba ativa usam um verde
+   contido: eles se repetem na tela inteira, e o que aparece muitas vezes tem
+   que ser calmo — brilho forte é para o que aparece uma vez. */
+
+.cabecalho__logo { background: var(--grad-logo); }
+
+.botao-primario { box-shadow: var(--brilho-acao); }
+.botao-primario:hover:not(:disabled) { box-shadow: var(--brilho-acao-forte); }
+.aba--ativa { box-shadow: var(--brilho-acao); }
+.chip--ativo { box-shadow: var(--brilho-acao); }
+
+/* ── Botões de código ───────────────────────────────────────────────────────
+   Nas estratégias fica só o ícone na cor secundária, sem caixa: eram três
+   destaques competindo com o botão de Simular, que é o que a pessoa precisa
+   achar. O do cabeçalho mantém a moldura por ser o principal.
+
+   `order` joga o código para o fim da linha. Duplicar e apagar continuam
+   surgindo no hover, mas já ocupam espaço quando invisíveis — sem isso o
+   ícone de código ficava recuado uns 24px e não batia com o + da seção. */
+
+.acao-mini { border-radius: 5px; width: 24px; height: 24px; }
+.acao-mini--destaque { border-radius: 5px; }
+
+.acao-mini--codigo {
+  order: 99;
+  color: var(--secundaria);
+  background: transparent;
+  border-color: transparent;
+}
+.acao-mini--codigo:hover {
+  color: var(--secundaria-forte);
+  background: color-mix(in oklab, var(--secundaria) 14%, transparent);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.botao-icone--codigo {
+  border-radius: 6px;
+  color: var(--secundaria);
+  background: transparent;
+  border-color: color-mix(in oklab, var(--secundaria) 40%, transparent);
+}
+.botao-icone--codigo:hover {
+  color: var(--secundaria-forte);
+  background: color-mix(in oklab, var(--secundaria) 12%, transparent);
+  border-color: var(--secundaria);
+  box-shadow: none;
+}
+
+.botao-icone { border-radius: 6px; }
+
+/* ── Campos de data ─────────────────────────────────────────────────────────
+   O grid de duas colunas não segurava os campos: input[type=date] tem largura
+   intrínseca própria e, sendo maior que a coluna, vazava para fora da lateral.
+   `min-width: 0` é o que autoriza o item de grid a encolher. */
+
+.linha-2 { min-width: 0; }
+.linha-2 > * { min-width: 0; }
+.campo { width: 100%; min-width: 0; }
+
+/* O ícone de calendário é desenhado pelo navegador e nasce preto. Em fundo
+   escuro ele sumia; `color-scheme` faz o próprio navegador desenhá-lo claro.
+   Precisa valer também para quem nunca escolheu tema e está no escuro pelo
+   sistema — era esse o caso que faltava. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) input[type="date"],
+  :root:not([data-tema="claro"]) input[type="number"] { color-scheme: dark; }
+}
+:root[data-tema="escuro"] input[type="date"],
+:root[data-tema="escuro"] input[type="number"] { color-scheme: dark; }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.12s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+/* As ações do cabeçalho de seção (+ e ?) recuam o mesmo tanto que o conteúdo
+   das linhas abaixo. A linha de estratégia é uma caixa com borda e padding; o
+   título da seção não é, então sem esse recuo os ícones de cima ficavam numa
+   coluna e os de baixo em outra. */
+.secao__acoes { margin-right: 10px; }
