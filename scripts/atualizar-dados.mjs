@@ -70,6 +70,47 @@ function dataISOdeBR(br) {
 }
 
 /**
+ * Busca uma série do SGS do Banco Central.
+ *
+ * A API não é consistente quando não há dado no intervalo: às vezes devolve
+ * `[]`, às vezes corpo vazio, às vezes um objeto de erro com HTTP 200. Como
+ * este script roda sozinho todo dia, qualquer uma dessas formas precisa virar
+ * "nada novo" em vez de derrubar a execução.
+ */
+async function buscarSGS(codigo, dataInicial) {
+  const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${codigo}/dados`
+    + `?formato=json&dataInicial=${dataInicial}`;
+
+  let resposta;
+  try {
+    resposta = await fetch(url);
+  } catch (e) {
+    console.log(`  SGS ${codigo}: falha de rede (${e.message}) — pulando`);
+    return [];
+  }
+
+  if (!resposta.ok) {
+    console.log(`  SGS ${codigo}: HTTP ${resposta.status} — pulando`);
+    return [];
+  }
+
+  const texto = (await resposta.text()).trim();
+  if (!texto) return [];
+
+  try {
+    const dados = JSON.parse(texto);
+    if (!Array.isArray(dados)) {
+      console.log(`  SGS ${codigo}: resposta nao e lista — pulando`);
+      return [];
+    }
+    return dados;
+  } catch {
+    console.log(`  SGS ${codigo}: resposta nao e JSON — pulando`);
+    return [];
+  }
+}
+
+/**
  * Limite superior das buscas no Yahoo: amanhã.
  *
  * `period2` é exclusivo, e a API recusa `period1 === period2`. Usando "hoje"
@@ -206,8 +247,7 @@ async function atualizarCDI() {
   console.log(`CDI: historico vai ate ${ultimaISO} (${linhas.length - 1} dias)`);
 
   // Serie 12 do SGS = taxa CDI diaria (% ao dia)
-  const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial=${dd}/${mm}/${desde.getFullYear()}`;
-  const dados = await fetch(url).then((r) => r.json());
+  const dados = await buscarSGS(12, `${dd}/${mm}/${desde.getFullYear()}`);
 
   const novas = dados
     .filter((r) => {
@@ -218,7 +258,7 @@ async function atualizarCDI() {
 
   if (novas.length) fs.appendFileSync(ARQ_CDI, quebra + novas.join(quebra));
   console.log(`  +${novas.length} dias` + (novas.length ? ` (ate ${dados.at(-1).data})` : ""));
-  return { novos: novas.length, ultimaData: dados.at(-1)?.data ?? ultima };
+  return { novos: novas.length, ultimaData: novas.length ? dados.at(-1).data : ultima };
 }
 
 // ─── Benchmarks ───────────────────────────────────────────────────────────────
@@ -277,8 +317,11 @@ async function atualizarIndicesMensais() {
 
   const series = {};
   for (const [nome, codigo] of Object.entries(SGS)) {
-    const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${codigo}/dados?formato=json&dataInicial=01/01/2017`;
-    const dados = await fetch(url).then((r) => r.json());
+    const dados = await buscarSGS(codigo, "01/01/2017");
+    if (!dados.length) {
+      console.log(`  ${nome}: sem dados — mantendo o arquivo atual`);
+      return null;
+    }
     series[nome] = new Map(
       dados.map((r) => {
         const [, m, a] = r.data.split("/");

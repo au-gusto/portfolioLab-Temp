@@ -1,5 +1,5 @@
 {
-  "atualizadoEm": "2026-08-20T12:24:21.943Z",
+  "atualizadoEm": "2026-08-20T12:26:42.292Z",
   "ativos": {
     "ultimoPregao": "2026-08-19",
     "tickers": 87
@@ -11,7 +11,7 @@
     "ultimoPregao": "2026-08-19"
   },
   "indicesMensais": {
-    "ultimoMes": "2026-07"
+    "ultimoMes": null
   },
   "tickersSemDados": [
     {
@@ -23,19 +23,15 @@
       "ultimoPregaoReal": "2026-08-19"
     },
     {
-      "ticker": "CCRO3",
-      "ultimoPregaoReal": "2026-08-19"
-    },
-    {
       "ticker": "CRFB3",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
-      "ticker": "CPLE6",
+      "ticker": "CCRO3",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
-      "ticker": "ELET6",
+      "ticker": "CPLE6",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
@@ -44,6 +40,10 @@
     },
     {
       "ticker": "EMBR3",
+      "ultimoPregaoReal": "2026-08-19"
+    },
+    {
+      "ticker": "ELET6",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
