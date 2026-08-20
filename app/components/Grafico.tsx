@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -9,6 +9,7 @@ import {
 import { type MetaEstrategia } from "../lib/estrategias-meta";
 import { reduzirPontos, PONTOS_NO_GRAFICO } from "../lib/amostragem";
 import PainelSeries from "./PainelSeries";
+import { assinarTema, lerNumeroDoTema } from "../lib/tema";
 
 interface Ponto { data: string; valor: number }
 
@@ -81,6 +82,13 @@ export default function Grafico({ dados, config, series, lista }: Props) {
 
   const investido = config ? totalInvestido(config) : null;
   const doModo = useMemo(() => lista.filter((e) => series.includes(e.id)), [lista, series]);
+
+  // O quanto o benchmark recua depende do tema, entao o valor vem do CSS.
+  const opacidadeBenchmark = useSyncExternalStore(
+    assinarTema,
+    () => lerNumeroDoTema("--opacidade-benchmark", 1),
+    () => 1,
+  );
   /**
    * Domínio do eixo Y calculado sobre TODAS as séries, não só as visíveis.
    *
@@ -213,8 +221,11 @@ export default function Grafico({ dados, config, series, lista }: Props) {
                 <Line
                   key={id} type="monotone" dataKey={id} stroke={cor}
                   name={titulo} dot={false}
-                  strokeWidth={tracejado ? 1.5 : 2.5}
-                  strokeOpacity={tracejado ? 0.85 : 1}
+                  strokeWidth={tracejado ? 1.8 : 2.5}
+                  // No claro o benchmark vai a cheio: cor lavada com traco fino
+                  // some no fundo claro. No escuro ele recua um pouco, porque
+                  // la o problema e o oposto — tudo salta demais.
+                  strokeOpacity={tracejado ? opacidadeBenchmark : 1}
                   strokeDasharray={tracejado ? "5 4" : undefined}
                   connectNulls
                   isAnimationActive={false}

@@ -249,7 +249,7 @@ function validarStatus() {
 
 // ─── Execução ─────────────────────────────────────────────────────────────────
 
-validarAtivos("Dados_Ativos_B3_AdjClose.csv", "Ativos (Ibovespa)");
+validarAtivos("Dados_Ativos_B3_AdjClose.csv", "Ativos (Outros)");
 validarAtivos("Dados_Ativos_IBRX100_AdjClose.csv", "Ativos (IBRX-100)");
 validarCDI();
 validarIbov();

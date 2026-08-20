@@ -33,16 +33,9 @@ export interface BaseAtivos {
   doUsuario?: boolean;
 }
 
-export const BASE_PADRAO = "ibov";
+export const BASE_PADRAO = "ibrx100";
 
 export const BASES: BaseAtivos[] = [
-  {
-    id: "ibov",
-    titulo: "Ibovespa",
-    descricao: "Carteira do Ibovespa, com cotações desde 2018.",
-    arquivo: "/Dados/Dados_Ativos_B3_AdjClose.csv",
-    inicioMinimo: null,
-  },
   {
     id: "ibrx100",
     titulo: "IBRX-100",
@@ -52,6 +45,15 @@ export const BASES: BaseAtivos[] = [
       + "histórico para o cálculo de risco.",
     arquivo: "/Dados/Dados_Ativos_IBRX100_AdjClose.csv",
     inicioMinimo: "2024-01-01",
+  },
+  {
+    id: "outros",
+    titulo: "Outros",
+    descricao:
+      "Papéis fora do IBRX-100 hoje — a carteira antiga do Ibovespa mais quem "
+      + "saiu do índice em alguma reavaliação. Cotações desde 2018.",
+    arquivo: "/Dados/Dados_Ativos_B3_AdjClose.csv",
+    inicioMinimo: null,
   },
 ];
 

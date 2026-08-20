@@ -3,7 +3,11 @@
 /* ══ PALETA CLARA ════════════════════════════════════════════════════════════
    Índigo sobre um branco levemente esverdiado. O fundo não é cinza neutro de
    propósito: um traço de verde esquenta a tela e faz o índigo parecer mais
-   frio do que ele é sozinho, que é o contraste que separa ação de superfície. */
+   frio do que ele é sozinho, que é o contraste que separa ação de superfície.
+
+   As cores de série são deliberadamente saturadas. Num fundo claro, cor lavada
+   com traço fino desaparece — e uma linha de benchmark que ninguém enxerga é
+   o mesmo que benchmark nenhum. */
 
 :root {
   color-scheme: light;
@@ -22,52 +26,54 @@
   --secundaria: #16A34A;
   --secundaria-forte: #15803D;
 
-  /* Degradês da marca. Um só para o título e o bloco do logo, outro, mais
-     curto, para superfícies que precisam de brilho sem virar arco-íris. */
-  --grad-marca: linear-gradient(115deg, #4F46E5 0%, #0EA5E9 48%, #0D9488 100%);
+  /* O logo guarda o degradê da marca; o botão é verde, porque "executar" e
+     "identidade" são coisas diferentes e não precisam da mesma cor. */
   --grad-logo: linear-gradient(135deg, #4F46E5 0%, #6366F1 55%, #0EA5E9 100%);
-  --grad-acao: linear-gradient(135deg, #4F46E5 0%, #6366F1 55%, #0EA5E9 100%);
+  --grad-marca: linear-gradient(115deg, #4F46E5 0%, #0EA5E9 48%, #0D9488 100%);
+  --grad-acao: linear-gradient(135deg, #047857 0%, #10B981 100%);
   --grad-fio: linear-gradient(90deg, transparent, #4F46E5 18%, #0EA5E9 50%, #0D9488 82%, transparent);
 
-  /* Vidro fosco do cabeçalho e halos coloridos. */
   --vidro: rgba(255, 255, 255, 0.72);
   --halo: rgba(79, 70, 229, 0.18);
   --halo-forte: rgba(79, 70, 229, 0.30);
   --brilho: 0 6px 18px rgba(79, 70, 229, 0.26);
   --brilho-forte: 0 8px 26px rgba(79, 70, 229, 0.38);
-  --brilho-acao: 0 6px 18px rgba(79, 70, 229, 0.26);
-  --brilho-acao-forte: 0 8px 26px rgba(79, 70, 229, 0.38);
+  --brilho-acao: 0 6px 18px rgba(5, 150, 105, 0.30);
+  --brilho-acao-forte: 0 8px 26px rgba(5, 150, 105, 0.42);
 
-  --positivo: #0D9488;
-  --negativo: #C2453B;
-  --atencao: #8A5B09;
-  --info: #2C6FB5;
+  --positivo: #059669;
+  --negativo: #DC2626;
+  --atencao: #B45309;
+  --info: #0284C7;
 
-  --atencao-fundo: rgba(176, 116, 12, 0.10);
-  --info-fundo: rgba(44, 111, 181, 0.09);
-  --negativo-fundo: rgba(194, 69, 59, 0.09);
+  --atencao-fundo: rgba(180, 83, 9, 0.10);
+  --info-fundo: rgba(2, 132, 199, 0.09);
+  --negativo-fundo: rgba(220, 38, 38, 0.09);
 
-  /* Séries dos gráficos, espaçadas em matiz E em luminosidade para
-     continuarem distinguíveis em preto e branco. O CDI é o mais apagado de
-     propósito: é referência, não competidor. */
-  --serie-paridade: #4F46E5;
-  --serie-cdi: #64748B;
-  --serie-eficiente: #0D9488;
-  --serie-ingenua: #C2810B;
-  --serie-ibov: #9333EA;
-  --serie-ipca: #C2453B;
-  --serie-poupanca: #4D7C0F;
+  /* Séries dos gráficos: matizes bem separados e cromas altos. O CDI é o único
+     de propósito apagado — é régua, não competidor. */
+  --serie-paridade: #4338CA;
+  --serie-cdi: #475569;
+  --serie-eficiente: #059669;
+  --serie-ingenua: #EA580C;
+  --serie-ibov: #7C3AED;
+  --serie-ipca: #DC2626;
+  --serie-poupanca: #65A30D;
 
   /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
      para nenhum parecer mais importante só por ser mais claro. */
   --cat-1: #4F46E5;
-  --cat-2: #0D9488;
-  --cat-3: #B0740C;
-  --cat-4: #C2453B;
-  --cat-5: #9333EA;
-  --cat-6: #0EA5E9;
-  --cat-7: #A83C6E;
-  --cat-8: #4D7C0F;
+  --cat-2: #059669;
+  --cat-3: #EA580C;
+  --cat-4: #DC2626;
+  --cat-5: #7C3AED;
+  --cat-6: #0284C7;
+  --cat-7: #DB2777;
+  --cat-8: #65A30D;
+
+  /* Opacidade das linhas de benchmark. No claro elas vão a cheio: o tracejado
+     já basta para separá-las das estratégias. */
+  --opacidade-benchmark: 1;
 
   /* Medidas repetidas o bastante para merecerem nome */
   --lateral: 340px;
@@ -81,9 +87,14 @@
 }
 
 /* ══ PALETA ESCURA ═══════════════════════════════════════════════════════════
-   Terminal de mercado: preto profundo, verde como segunda cor e acentos
-   luminosos (ciano, violeta, verde-limão). Os halos existem porque em fundo
-   quase preto uma borda de 1px some — o brilho é que dá volume. */
+   Modo noturno de verdade: o objetivo é passar horas olhando sem cansar, não
+   impressionar num print.
+
+   Por isso três coisas foram contidas. O fundo não é preto puro — preto
+   absoluto com texto claro dá o contraste mais violento possível, e o olho
+   paga por ele. O texto não é branco, é um cinza-azulado. E os acentos têm
+   croma baixo: no escuro a cor satura por conta da adaptação da retina, então
+   o que parece equilibrado à luz do dia berra às onze da noite. */
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) { color-scheme: dark; }
@@ -93,121 +104,125 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --fundo: #05070A;
-    --fundo-card: #0B0F15;
-    --fundo-elevado: #141B23;
-    --borda: #212B36;
-    --borda-suave: #171F28;
-    --texto: #E6EDF3;
-    --texto-suave: #8B98A6;
+    --fundo: #0B0E13;
+    --fundo-card: #12161D;
+    --fundo-elevado: #1A1F28;
+    --borda: #262D38;
+    --borda-suave: #1C222B;
+    --texto: #C5CDD6;
+    --texto-suave: #78838F;
 
-    --primaria: #22D3EE;
-    --primaria-forte: #67E8F9;
-    --sobre-primaria: #04121A;
-    --secundaria: #34D399;
-    --secundaria-forte: #6EE7B7;
+    --primaria: #4E9DAB;
+    --primaria-forte: #66B4C2;
+    --sobre-primaria: #06161A;
+    --secundaria: #4E9E78;
+    --secundaria-forte: #6BB392;
 
-    --grad-marca: linear-gradient(115deg, #22D3EE 0%, #A78BFA 52%, #A3E635 100%);
-    --grad-logo: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
-    --grad-acao: linear-gradient(135deg, #15794B 0%, #1E9E63 100%);
-    --grad-fio: linear-gradient(90deg, transparent, #22D3EE 18%, #A78BFA 50%, #A3E635 82%, transparent);
+    --grad-logo: linear-gradient(135deg, #3F9DB0 0%, #7C6FB0 52%, #82A056 100%);
+    --grad-marca: linear-gradient(115deg, #4A9CAC 0%, #8478B0 52%, #869E5E 100%);
+    --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
+    --grad-fio: linear-gradient(90deg, transparent, #3F9DB0 18%, #7C6FB0 50%, #82A056 82%, transparent);
 
-    --vidro: rgba(11, 15, 21, 0.72);
-    --halo: rgba(34, 211, 238, 0.22);
-    --halo-forte: rgba(34, 211, 238, 0.38);
-    --brilho: 0 0 22px rgba(34, 211, 238, 0.28);
-    --brilho-forte: 0 0 32px rgba(34, 211, 238, 0.45);
-    --brilho-acao: 0 0 14px rgba(30, 158, 99, 0.26);
-    --brilho-acao-forte: 0 0 20px rgba(30, 158, 99, 0.40);
+    --vidro: rgba(18, 22, 29, 0.76);
+    --halo: rgba(78, 157, 171, 0.16);
+    --halo-forte: rgba(78, 157, 171, 0.26);
+    --brilho: 0 0 16px rgba(78, 157, 171, 0.18);
+    --brilho-forte: 0 0 22px rgba(78, 157, 171, 0.28);
+    --brilho-acao: 0 0 12px rgba(62, 138, 103, 0.18);
+    --brilho-acao-forte: 0 0 18px rgba(62, 138, 103, 0.28);
 
-    --positivo: #4ADE80;
-    --negativo: #FB7185;
-    --atencao: #FBBF24;
-    --info: #38BDF8;
+    --positivo: #52A37B;
+    --negativo: #C0787E;
+    --atencao: #B39154;
+    --info: #5B8CAD;
 
-    --atencao-fundo: rgba(251, 191, 36, 0.12);
-    --info-fundo: rgba(56, 189, 248, 0.11);
-    --negativo-fundo: rgba(251, 113, 133, 0.11);
+    --atencao-fundo: rgba(179, 145, 84, 0.10);
+    --info-fundo: rgba(91, 140, 173, 0.10);
+    --negativo-fundo: rgba(192, 120, 126, 0.10);
 
-    --serie-paridade: #22D3EE;
-    --serie-cdi: #7D8B99;
-    --serie-eficiente: #4ADE80;
-    --serie-ingenua: #FBBF24;
-    --serie-ibov: #A78BFA;
-    --serie-ipca: #FB7185;
-    --serie-poupanca: #A3E635;
+    --serie-paridade: #4FA3B5;
+    --serie-cdi: #6C7885;
+    --serie-eficiente: #529E76;
+    --serie-ingenua: #B08F4E;
+    --serie-ibov: #8A7BB2;
+    --serie-ipca: #B57279;
+    --serie-poupanca: #879B58;
 
-    --cat-1: #22D3EE;
-    --cat-2: #4ADE80;
-    --cat-3: #FBBF24;
-    --cat-4: #FB7185;
-    --cat-5: #A78BFA;
-    --cat-6: #38BDF8;
-    --cat-7: #F472B6;
-    --cat-8: #A3E635;
+    --cat-1: #4FA3B5;
+    --cat-2: #529E76;
+    --cat-3: #B08F4E;
+    --cat-4: #B57279;
+    --cat-5: #8A7BB2;
+    --cat-6: #5B8CAD;
+    --cat-7: #AE7096;
+    --cat-8: #879B58;
 
-    --sombra: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(0, 0, 0, 0.55);
-    --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(34, 211, 238, 0.10);
+    --opacidade-benchmark: 0.9;
+
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(0, 0, 0, 0.5);
+    --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(78, 157, 171, 0.07);
   }
 }
 
 /* Escolha explícita do usuário vence o sistema, nos dois sentidos. */
 :root[data-tema="escuro"] {
-  --fundo: #05070A;
-  --fundo-card: #0B0F15;
-  --fundo-elevado: #141B23;
-  --borda: #212B36;
-  --borda-suave: #171F28;
-  --texto: #E6EDF3;
-  --texto-suave: #8B98A6;
+  --fundo: #0B0E13;
+  --fundo-card: #12161D;
+  --fundo-elevado: #1A1F28;
+  --borda: #262D38;
+  --borda-suave: #1C222B;
+  --texto: #C5CDD6;
+  --texto-suave: #78838F;
 
-  --primaria: #22D3EE;
-  --primaria-forte: #67E8F9;
-  --sobre-primaria: #04121A;
-  --secundaria: #34D399;
-  --secundaria-forte: #6EE7B7;
+  --primaria: #4E9DAB;
+  --primaria-forte: #66B4C2;
+  --sobre-primaria: #06161A;
+  --secundaria: #4E9E78;
+  --secundaria-forte: #6BB392;
 
-  --grad-marca: linear-gradient(115deg, #22D3EE 0%, #A78BFA 52%, #A3E635 100%);
-  --grad-logo: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
-  --grad-acao: linear-gradient(135deg, #15794B 0%, #1E9E63 100%);
-  --grad-fio: linear-gradient(90deg, transparent, #22D3EE 18%, #A78BFA 50%, #A3E635 82%, transparent);
+  --grad-logo: linear-gradient(135deg, #3F9DB0 0%, #7C6FB0 52%, #82A056 100%);
+  --grad-marca: linear-gradient(115deg, #4A9CAC 0%, #8478B0 52%, #869E5E 100%);
+  --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
+  --grad-fio: linear-gradient(90deg, transparent, #3F9DB0 18%, #7C6FB0 50%, #82A056 82%, transparent);
 
-  --vidro: rgba(11, 15, 21, 0.72);
-  --halo: rgba(34, 211, 238, 0.22);
-  --halo-forte: rgba(34, 211, 238, 0.38);
-  --brilho: 0 0 22px rgba(34, 211, 238, 0.28);
-  --brilho-forte: 0 0 32px rgba(34, 211, 238, 0.45);
-  --brilho-acao: 0 0 14px rgba(30, 158, 99, 0.26);
-  --brilho-acao-forte: 0 0 20px rgba(30, 158, 99, 0.40);
+  --vidro: rgba(18, 22, 29, 0.76);
+  --halo: rgba(78, 157, 171, 0.16);
+  --halo-forte: rgba(78, 157, 171, 0.26);
+  --brilho: 0 0 16px rgba(78, 157, 171, 0.18);
+  --brilho-forte: 0 0 22px rgba(78, 157, 171, 0.28);
+  --brilho-acao: 0 0 12px rgba(62, 138, 103, 0.18);
+  --brilho-acao-forte: 0 0 18px rgba(62, 138, 103, 0.28);
 
-  --positivo: #4ADE80;
-  --negativo: #FB7185;
-  --atencao: #FBBF24;
-  --info: #38BDF8;
+  --positivo: #52A37B;
+  --negativo: #C0787E;
+  --atencao: #B39154;
+  --info: #5B8CAD;
 
-  --atencao-fundo: rgba(251, 191, 36, 0.12);
-  --info-fundo: rgba(56, 189, 248, 0.11);
-  --negativo-fundo: rgba(251, 113, 133, 0.11);
+  --atencao-fundo: rgba(179, 145, 84, 0.10);
+  --info-fundo: rgba(91, 140, 173, 0.10);
+  --negativo-fundo: rgba(192, 120, 126, 0.10);
 
-  --serie-paridade: #22D3EE;
-  --serie-cdi: #7D8B99;
-  --serie-eficiente: #4ADE80;
-  --serie-ingenua: #FBBF24;
-  --serie-ibov: #A78BFA;
-  --serie-ipca: #FB7185;
-  --serie-poupanca: #A3E635;
+  --serie-paridade: #4FA3B5;
+  --serie-cdi: #6C7885;
+  --serie-eficiente: #529E76;
+  --serie-ingenua: #B08F4E;
+  --serie-ibov: #8A7BB2;
+  --serie-ipca: #B57279;
+  --serie-poupanca: #879B58;
 
-  --cat-1: #22D3EE;
-  --cat-2: #4ADE80;
-  --cat-3: #FBBF24;
-  --cat-4: #FB7185;
-  --cat-5: #A78BFA;
-  --cat-6: #38BDF8;
-  --cat-7: #F472B6;
-  --cat-8: #A3E635;
+  --cat-1: #4FA3B5;
+  --cat-2: #529E76;
+  --cat-3: #B08F4E;
+  --cat-4: #B57279;
+  --cat-5: #8A7BB2;
+  --cat-6: #5B8CAD;
+  --cat-7: #AE7096;
+  --cat-8: #879B58;
 
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(0, 0, 0, 0.55);
-  --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(34, 211, 238, 0.10);
+  --opacidade-benchmark: 0.9;
+
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(0, 0, 0, 0.5);
+  --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(78, 157, 171, 0.07);
 }
 
 * { box-sizing: border-box; }

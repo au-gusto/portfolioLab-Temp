@@ -353,7 +353,7 @@ async function atualizarIndicesMensais() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const ativos = await atualizarAtivos(ARQ_ATIVOS, "Ativos (Ibovespa)");
+const ativos = await atualizarAtivos(ARQ_ATIVOS, "Ativos (Outros)");
 
 // A base do IBRX-100 precisa envelhecer junto. Deixar so uma delas no cron era
 // repetir o problema que ja tivemos: cotacao congelada por meses sem nada na
