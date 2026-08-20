@@ -187,7 +187,10 @@ async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos", aposenta
   console.log(`${rotulo}: historico vai ate ${ultimaData} (${linhas.length - 1} pregoes, ${tickers.length} tickers)`);
   if (inicio >= hoje) {
     console.log("  ja esta atualizado.");
-    return { novos: 0, ultimaData, tickers: tickers.length, falhos: [] };
+    // `buscou: false` importa: quem nao foi ao Yahoo nao tem como saber quais
+    // tickers pararam de responder, e uma lista vazia aqui seria lida como
+    // "nenhum problema" em vez de "nao verifiquei".
+    return { novos: 0, ultimaData, tickers: tickers.length, falhos: [], buscou: false };
   }
   console.log(`  buscando ${inicio} -> ${hoje} ...`);
 
@@ -283,7 +286,13 @@ async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos", aposenta
     }
   }
   console.log(`  +${novas.length} pregoes` + (datas.length ? ` (ate ${datas[datas.length - 1]})` : ""));
-  return { novos: novas.length, ultimaData: datas.at(-1) ?? ultimaData, tickers: tickers.length, falhos };
+  return {
+    novos: novas.length,
+    ultimaData: datas.at(-1) ?? ultimaData,
+    tickers: tickers.length,
+    falhos,
+    buscou: true,
+  };
 }
 
 // ─── CDI ──────────────────────────────────────────────────────────────────────
@@ -405,6 +414,24 @@ async function atualizarIndicesMensais() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Status anterior, para nao perder o que esta execucao nao verificou.
+ *
+ * O script roda de novo no mesmo dia com frequencia — reexecucao manual, dois
+ * gatilhos, um dia sem pregao novo. Nesses casos ele sai cedo, sem consultar o
+ * Yahoo, e por isso nao sabe quais tickers pararam de responder. Sobrescrever
+ * a lista com vazio apagaria o aviso de "sem cotacao nova desde X" que o app
+ * mostra, sem que nada tivesse mudado nos dados.
+ */
+function lerStatusAnterior() {
+  try {
+    return JSON.parse(fs.readFileSync(ARQ_STATUS, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+const statusAnterior = lerStatusAnterior();
 const aposentados = lerAposentados();
 const ativos = await atualizarAtivos(ARQ_ATIVOS, "Ativos (Outros)", aposentados);
 
@@ -423,7 +450,9 @@ fs.writeFileSync(ARQ_STATUS, JSON.stringify({
   cdi: { ultimoDia: cdi.ultimaData },
   ibov: { ultimoPregao: ibov },
   indicesMensais: { ultimoMes: indices },
-  tickersSemDados: ativos.falhos,
+  tickersSemDados: ativos.buscou
+    ? ativos.falhos
+    : (statusAnterior?.tickersSemDados ?? []),
   aposentados: [...aposentados],
 }, null, 2) + "\n");
 
