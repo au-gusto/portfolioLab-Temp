@@ -165,6 +165,10 @@ async function atualizarAtivos() {
   const datas = [...contagem.entries()]
     .filter(([, n]) => n >= minimo)
     .map(([d]) => d)
+    // Guarda contra duplicata: quando nao ha pregao novo, o Yahoo devolve a
+    // ultima barra existente. Sem este filtro ela seria anexada de novo e o
+    // arquivo passaria a ter duas linhas com a mesma data.
+    .filter((d) => d > ultimaData)
     .sort();
 
   const novas = datas.map((d) => {
@@ -246,10 +250,10 @@ async function atualizarIbov() {
   const r = await yahoo.chart("^BVSP", { period1: inicio, period2: hoje, interval: "1d" });
   const novas = (r.quotes ?? [])
     .filter((q) => (q.adjclose ?? q.close) != null)
-    .map((q) => {
-      const dia = new Date(q.date).toISOString().slice(0, 10);
-      return `${formatarDataBR(dia)},${formatarValor(q.adjclose ?? q.close)}`;
-    });
+    .map((q) => ({ dia: new Date(q.date).toISOString().slice(0, 10), q }))
+    // Mesma guarda dos ativos: nunca reanexar um dia que ja esta no arquivo.
+    .filter(({ dia }) => novoArquivo || dia > ultimaISO)
+    .map(({ dia, q }) => `${formatarDataBR(dia)},${formatarValor(q.adjclose ?? q.close)}`);
 
   if (novoArquivo) {
     fs.writeFileSync(ARQ_IBOV, ["Data,IBOV", ...novas].join("\n") + "\n");

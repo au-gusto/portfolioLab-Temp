@@ -1,5 +1,5 @@
 {
-  "atualizadoEm": "2026-08-20T12:22:57.111Z",
+  "atualizadoEm": "2026-08-20T12:24:21.943Z",
   "ativos": {
     "ultimoPregao": "2026-08-19",
     "tickers": 87
@@ -35,11 +35,11 @@
       "ultimoPregaoReal": "2026-08-19"
     },
     {
-      "ticker": "ELET3",
+      "ticker": "ELET6",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
-      "ticker": "ELET6",
+      "ticker": "ELET3",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
