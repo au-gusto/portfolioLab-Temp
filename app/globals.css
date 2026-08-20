@@ -1111,3 +1111,128 @@ input[type="checkbox"] { accent-color: var(--primaria); }
   min-width: 42px;
   text-align: right;
 }
+
+
+/* ══ BLOCO DO GRÁFICO ════════════════════════════════════════════════════════
+   Título, valor de referência, faixa de séries e gráfico num cartão só. Antes
+   os cartões de métrica eram um bloco separado e, com sete séries, quebravam
+   em duas linhas que empurravam o gráfico para fora da tela. */
+
+.bloco-grafico {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bloco-grafico__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Valor de referência: um controle discreto no cabeçalho, não um cartão. */
+.referencia {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+}
+.referencia__rotulo {
+  color: var(--texto-suave);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.referencia__prefixo { color: var(--texto-suave); font-size: 12px; }
+.referencia__campo {
+  width: 76px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--borda);
+  color: var(--texto);
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0 0 2px;
+  outline: none;
+}
+.referencia__campo:hover { border-bottom-color: var(--texto-suave); }
+.referencia__campo:focus { border-bottom-style: solid; border-bottom-color: var(--primaria); }
+
+/* ══ FAIXA DE SÉRIES (também é a legenda) ════════════════════════════════════ */
+
+.faixa-series {
+  display: grid;
+  /* Mínimo apertado o suficiente para as sete séries caberem numa linha só
+     num monitor comum — era o que empurrava o gráfico para baixo. */
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 6px;
+}
+
+.serie-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--fundo);
+  border: 1px solid var(--borda-suave);
+  border-left: 3px solid var(--cor-serie);
+  border-radius: var(--raio-p);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: opacity 0.15s, background 0.15s;
+}
+.serie-card:hover { background: var(--fundo-elevado); }
+.serie-card:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+
+/* Desligada: some do gráfico mas continua clicável para voltar. O número fica
+   visível de propósito — dá para comparar sem poluir o desenho. */
+.serie-card--oculta {
+  opacity: 0.42;
+  border-left-color: var(--borda);
+  background: transparent;
+}
+.serie-card--oculta .serie-card__valor { color: var(--texto-suave) !important; }
+
+.serie-card__topo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.serie-card__marca {
+  width: 10px;
+  height: 3px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.serie-card__nome {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.serie-card__valor {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--texto);
+}
+.serie-card__apoio {
+  font-size: 11px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .faixa-series { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
+  .serie-card__valor { font-size: 15px; }
+}
