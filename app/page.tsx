@@ -1,12 +1,11 @@
 import PaginaPrincipal from "./components/PaginaPrincipal";
-import { lerCSV } from "./lib/lerDados";
-import { lerCDI } from "./lib/lerDados";
+import { lerTickers, lerStatus } from "./lib/fonte-dados";
 
 export default function Home() {
-  const dados = lerCSV();
-  const cdi = lerCDI();
-  const primeiroDia = dados[0] as Record<string, string>;
-  const tickers = Object.keys(primeiroDia).filter((col) => col !== "Data");
+  // Só a lista de tickers e o status dos dados viajam no HTML. As cotações
+  // vêm depois, por /api/dados/precos, buscadas pelo worker do Python.
+  const tickers = lerTickers();
+  const status = lerStatus();
 
-  return <PaginaPrincipal tickers={tickers} dados={dados} cdi={cdi} />;
+  return <PaginaPrincipal tickers={tickers} status={status} />;
 }

@@ -1,0 +1,70 @@
+{
+  "atualizadoEm": "2026-08-20T11:45:31.657Z",
+  "ativos": {
+    "ultimoPregao": "2026-08-19",
+    "tickers": 87
+  },
+  "cdi": {
+    "ultimoDia": "18/08/2026"
+  },
+  "ibov": {
+    "ultimoPregao": "2026-08-19"
+  },
+  "indicesMensais": {
+    "ultimoMes": "2026-07"
+  },
+  "tickersSemDados": [
+    {
+      "ticker": "AZUL4",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "BRFS3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "CCRO3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "CRFB3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "CPLE6",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "ELET3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "ELET6",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "EMBR3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "NTCO3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "JBSS3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "MRFG3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "PETZ3",
+      "ultimoPregaoReal": "2026-08-18"
+    },
+    {
+      "ticker": "STBP3",
+      "ultimoPregaoReal": "2026-08-18"
+    }
+  ]
+}

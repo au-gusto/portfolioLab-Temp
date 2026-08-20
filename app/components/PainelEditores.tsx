@@ -1,143 +1,115 @@
 "use client";
 
 import { useState } from "react";
+import { doGrupo, type IdSerie } from "../lib/estrategias-meta";
+import Icone from "./Icone";
 
 interface Props {
   aberto: boolean;
   setPainelAberto: (valor: boolean) => void;
-  codigos: { paridade: string; eficiente: string; cdi: string; ingenua: string };
-  setCodigos: (codigos: { paridade: string; eficiente: string; cdi: string; ingenua: string }) => void;
-  marcados: string[];
-  setMarcados: (valor: string[]) => void;
+  codigos: Record<IdSerie, string>;
+  setCodigos: React.Dispatch<React.SetStateAction<Record<IdSerie, string>>>;
   modo: "aportes" | "rentabilidade";
 }
 
-const ESTRATEGIAS = [
-  {
-    id: "paridade",
-    titulo: "Paridade de Risco"
-  },
-  {
-    id: "cdi",
-    titulo: "CDI"
-  },
-  {
-    id: "eficiente",
-    titulo: "Carteira Eficiente"
-  },
-  {
-    id: "ingenua",
-    titulo: "Ingênua",
-    modos: ["rentabilidade"] as const,
-  }
-];
-
-export default function PainelEditores({ aberto, setPainelAberto, codigos, setCodigos, marcados, setMarcados, modo }: Props) {
+/**
+ * Gaveta de edição do código Python das estratégias.
+ *
+ * Ligar/desligar estratégia saiu daqui e foi para a lateral: escolher o que
+ * comparar é a tarefa principal e não deveria exigir abrir um editor de código.
+ * Aqui ficou só o que é de fato avançado — mexer no algoritmo.
+ */
+export default function PainelEditores({ aberto, setPainelAberto, codigos, setCodigos, modo }: Props) {
   const [abertos, setAbertos] = useState<string[]>([]);
-
-  function toggleEditor(id: string) {
-    if (abertos.includes(id)) {
-      setAbertos(abertos.filter((a) => a !== id));
-    } else {
-      setAbertos([...abertos, id]);
-    }
-  }
 
   if (!aberto) return null;
 
+  function alternar(id: string) {
+    setAbertos((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
+  }
+
   return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      right: 0,
-      width: "500px",
-      height: "100vh",
-      background: "var(--fundo-card)",
-      borderLeft: "1px solid var(--borda)",
-      padding: "20px",
-      zIndex: 100,
-      overflowY: "auto",
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px"
-    }}>
+    <div
+      role="dialog"
+      aria-label="Editores de estratégia"
+      style={{
+        position: "fixed",
+        top: 0, right: 0, bottom: 0,
+        width: "min(560px, 100vw)",
+        background: "var(--fundo-card)",
+        borderLeft: "1px solid var(--borda)",
+        padding: "20px",
+        zIndex: 200,
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <p style={{ color: "var(--texto-suave)", fontSize: "12px" }}>
-          EDITORES DE ESTRATÉGIA
-        </p>
-        <button
-          onClick={() => setPainelAberto(false)}
-          style={{
-            background: "none",
-            border: "1px solid var(--borda)",
-            borderRadius: "6px",
-            padding: "8px",
-            cursor: "pointer",
-            color: "var(--texto)",
-            fontSize: "14px"
-          }}
-        >
-          ✕
+        <div>
+          <p style={{ color: "var(--texto)", fontSize: "13px", fontWeight: 700, margin: 0 }}>
+            Código das estratégias
+          </p>
+          <p className="dica" style={{ marginTop: "2px" }}>
+            Python executado no navegador. Editar aqui muda a próxima simulação.
+          </p>
+        </div>
+        <button className="botao-icone" onClick={() => setPainelAberto(false)} aria-label="Fechar">
+          <Icone nome="fechar" tamanho={15} />
         </button>
       </div>
 
-      {ESTRATEGIAS.filter((e) => !("modos" in e) || (e.modos as readonly string[]).includes(modo)).map((estrategia) => (
-        <div key={estrategia.id} style={{ border: "1px solid var(--borda)", borderRadius: "6px", overflow: "hidden" }}>
-          <div style={{ display: "flex", alignItems: "center"}}>
-            
-            <div className="checkbox-wrapper-6">
-              <input
-                className="tgl tgl-light"
-                id={`cb-${estrategia.id}`}
-                type="checkbox"
-                checked={marcados.includes(estrategia.id)}
-                onChange={() => {
-                  if (marcados.includes(estrategia.id)) {
-                    setMarcados(marcados.filter((m) => m !== estrategia.id));
-                  } else {
-                    setMarcados([...marcados, estrategia.id]);
-                  }
-                }}
-              />
-              <label className="tgl-btn" htmlFor={`cb-${estrategia.id}`} />
-            </div>
-            
-            <button
-              onClick={() => toggleEditor(estrategia.id)}
+      {[...doGrupo("estrategia", modo), ...doGrupo("benchmark", modo)].map((e) => (
+        <div key={e.id} style={{ border: "1px solid var(--borda)", borderRadius: "var(--raio-p)", overflow: "hidden" }}>
+          <button
+            onClick={() => alternar(e.id)}
+            aria-expanded={abertos.includes(e.id)}
+            style={{
+              width: "100%",
+              padding: "12px",
+              background: "var(--fundo)",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--texto)",
+              fontSize: "13px",
+              fontWeight: 700,
+              fontFamily: "inherit",
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
+            <span
+              className="estrategia__cor"
               style={{
-                width: "100%",
-                padding: "12px",
-                background: "var(--fundo)",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--texto)",
-                fontSize: "13px",
-                fontWeight: "bold",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between"
+                background: e.tracejado ? "transparent" : e.cor,
+                border: e.tracejado ? `2px dashed ${e.cor}` : "none",
               }}
-            >
-              {estrategia.titulo}
-              <span>{abertos.includes(estrategia.id) ? "▲" : "▼"}</span>
-            </button>
-          </div>
-          {abertos.includes(estrategia.id) && (
+            />
+            <span style={{ flex: 1 }}>{e.titulo}</span>
+            <Icone nome={abertos.includes(e.id) ? "recolher" : "expandir"} tamanho={15} />
+          </button>
+
+          {abertos.includes(e.id) && (
             <textarea
-              value={codigos[estrategia.id as keyof typeof codigos]}
-              onChange={(e) => setCodigos({ ...codigos, [estrategia.id]: e.target.value })}
+              value={codigos[e.id]}
+              onChange={(ev) => setCodigos((atual) => ({ ...atual, [e.id]: ev.target.value }))}
+              spellCheck={false}
               style={{
                 width: "100%",
-                minHeight: "200px",
+                minHeight: "320px",
                 background: "var(--fundo)",
                 color: "var(--texto)",
                 border: "none",
                 borderTop: "1px solid var(--borda)",
                 padding: "12px",
                 fontSize: "12px",
-                fontFamily: "monospace",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                lineHeight: 1.5,
                 resize: "vertical",
-                outline: "none"
+                outline: "none",
               }}
             />
           )}

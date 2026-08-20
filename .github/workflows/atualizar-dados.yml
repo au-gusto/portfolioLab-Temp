@@ -1,0 +1,66 @@
+name: Atualizar cotações
+
+# Roda depois do fechamento da B3 (18h BRT), de segunda a sexta.
+# 22:00 UTC = 19:00 BRT no horário padrão de Brasília.
+#
+# Também pode ser disparada à mão pela aba Actions do GitHub — útil para testar
+# sem esperar o horário.
+on:
+  schedule:
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch:
+
+# Sem isto o passo de commit falha: por padrão o token da Action é só leitura.
+permissions:
+  contents: write
+
+# Duas execuções simultâneas commitariam por cima uma da outra.
+concurrency:
+  group: atualizar-dados
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Buscar cotações e índices
+        run: node scripts/atualizar-dados.mjs
+
+      - name: Conferir se os dados continuam íntegros
+        run: node scripts/validar-dados.mjs
+
+      - name: Commitar se algo mudou
+        run: |
+          if git diff --quiet -- public/Dados; then
+            echo "Nada mudou — nenhum pregão novo desde a última execução."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/Dados
+          git commit -m "dados: cotações até $(date -u +%d/%m/%Y)"
+          git push
+
+      # ── Espelho opcional no Supabase ────────────────────────────────────────
+      # Só roda se os segredos existirem. O app NÃO lê daqui: é espelho, para
+      # quem quiser consultar os dados por SQL ou para features futuras que
+      # precisem de escrita por usuário.
+      - name: Espelhar no Supabase
+        if: env.SUPABASE_URL != ''
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/espelhar-supabase.mjs

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dados": "node scripts/atualizar-dados.mjs",
+    "dados:validar": "node scripts/validar-dados.mjs",
+    "dados:espelhar": "node scripts/espelhar-supabase.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",

@@ -6,73 +6,104 @@ from scipy.optimize import minimize
 # PREPARAÇÃO DOS DADOS
 # =============================================
 
-# Converte a lista de dicionários recebida do JavaScript em uma tabela (DataFrame)
-tabela_ativos = pd.DataFrame(dados_ativos)
-
-# Converte a coluna de datas para o formato de data do pandas
-tabela_ativos['Data'] = pd.to_datetime(tabela_ativos['Data'], format='%d/%m/%Y %H:%M:%S')
-
-# Converte os valores dos ativos de string para número
-# (necessário porque o CSV usa vírgula como separador decimal)
+# tabela_precos já vem pronta do carregamento: datas em datetime, preços em
+# float, linhas ordenadas. Montá-la aqui custaria ~85 ms por estratégia.
+tabela_ativos = tabela_precos
 lista_ativos = list(tickers)
-for ativo in lista_ativos:
-    tabela_ativos[ativo] = tabela_ativos[ativo].astype(str).str.replace(',', '.').astype(float)
 
-# Define o período da simulação
 data_inicio_simulacao = pd.to_datetime(data_inicio)
 data_fim_simulacao = pd.to_datetime(data_fim)
 
 # Lista que vai acumular os resultados diários {data, valor}
 resultado = []
 
-# Lista que vai acumular a alocação mensal {data, pesos} (usada pelos gráficos de paridade)
+# Lista que vai acumular a alocação mensal {data, pesos} (usada pelos gráficos)
 alocacao_mensal = []
 
 # Fator de retorno acumulado — começa em 1.0 (representa 0% de retorno)
 retorno_acumulado = 1.0
 
-# Limiar mínimo de volatilidade anualizada (%) para um ativo ser incluído na paridade
-# Ativos com volatilidade abaixo disso são excluídos pois distorcem o cálculo
+# Limiar mínimo de volatilidade anualizada (%) para um ativo entrar na paridade.
+# Ativos quase parados distorcem a matriz de covariância.
 limiar_volatilidade_minima = 13
 
 # =============================================
 # FUNÇÕES
 # =============================================
 
-# Calcula a contribuição de risco de cada ativo na carteira
-# x: pesos dos ativos
-# matriz_covariancia: covariância dos retornos
-# Retorna: (contribuições de risco individuais, risco total da carteira)
+def recortar(inicio, fim):
+    """Fatia a tabela por data sem varrer as 2 mil linhas com máscara booleana.
+
+    As datas estão ordenadas, então searchsorted acha os limites em O(log n) e
+    o .iloc devolve uma fatia. A versão com (Data >= a) & (Data < b) construía
+    dois vetores booleanos do tamanho da tabela inteira a cada mês."""
+    i = np.searchsorted(datas_precos, np.datetime64(inicio), side='left')
+    j = np.searchsorted(datas_precos, np.datetime64(fim), side='right')
+    return tabela_ativos.iloc[i:j]
+
+# Contribuição de risco de cada ativo na carteira
 def calcular_contribuicoes_risco(x, matriz_covariancia):
     risco_ponderado = np.dot(matriz_covariancia, x)
     risco_total = np.sqrt(np.dot(x.T, risco_ponderado))
     risco_marginal = risco_ponderado / risco_total if risco_total != 0 else np.zeros_like(risco_ponderado)
-    contribuicoes = x * risco_marginal
-    return contribuicoes, risco_total
+    return x * risco_marginal, risco_total
 
-# Função objetivo do otimizador — minimiza a diferença entre as contribuições de risco
-# O objetivo é que cada ativo contribua igualmente para o risco total da carteira
+# Função objetivo (Spinu, 2013). Note que 0.5 * w·(b/w) é a constante 0.5,
+# porque w = x/sqrt(x'Σx) faz w'Σw valer 1 por construção.
 def funcao_objetivo(x, matriz_covariancia, vetor_alvo):
     variancia = float(np.dot(x.T, np.dot(matriz_covariancia, x)))
     raiz_variancia = np.sqrt(variancia) if variancia > 0 else 1.0
     pesos_normalizados = x / raiz_variancia
     return 0.5 * np.dot(pesos_normalizados, vetor_alvo / (pesos_normalizados + 1e-18)) - np.dot(vetor_alvo, np.log(pesos_normalizados + 1e-18))
 
-# Resolve o problema de otimização e retorna os pesos ótimos de paridade de risco
-# matriz_covariancia: covariância dos retornos dos ativos selecionados
-# numero_ativos: quantidade de ativos no mês atual
-def resolver_paridade(matriz_covariancia, numero_ativos):
-    # Alvo: contribuição igual de risco para todos os ativos (1/n cada)
-    vetor_alvo = np.ones(numero_ativos) / numero_ativos
+def gradiente_objetivo(x, matriz_covariancia, vetor_alvo):
+    """Derivada exata da função acima.
+
+    Sem ela o SLSQP estima o gradiente por diferenças finitas, o que custa uma
+    avaliação extra por ativo a cada passo: eram 96 chamadas da objetivo por
+    otimização contra 19 com o gradiente. O ponto de chegada é o mesmo."""
+    risco_ponderado = np.dot(matriz_covariancia, x)
+    variancia = float(np.dot(x, risco_ponderado))
+    if variancia <= 0:
+        return np.zeros_like(x)
+    return -vetor_alvo / (x + 1e-18) + risco_ponderado / variancia
+
+def montar_vetor_alvo(ativos):
+    """Fatia de risco que cada ativo deve carregar.
+
+    Sem orcamento definido pelo usuario, todos carregam 1/n — que e a Paridade
+    de Risco classica. Com orcamento, cada um carrega o que foi pedido (secao
+    4.3 do artigo: PDR, Portfolio com Distribuicao de Risco).
+
+    A renormalizacao no fim e obrigatoria: o filtro de volatilidade minima pode
+    ter descartado ativos, e o vetor precisa somar 1 sobre os que sobraram."""
+    n = len(ativos)
+    if not orcamento_risco:
+        return np.ones(n) / n
+
+    alvo = np.array([float(orcamento_risco.get(a, 0.0)) for a in ativos], dtype=float)
+    total = alvo.sum()
+    if total <= 0:
+        return np.ones(n) / n
+    return alvo / total
+
+def resolver_paridade(matriz_covariancia, ativos):
+    numero_ativos = len(ativos)
+    vetor_alvo = montar_vetor_alvo(ativos)
     pesos_iniciais = np.ones(numero_ativos) / numero_ativos
 
     resultado_otimizacao = minimize(
         funcao_objetivo,
         pesos_iniciais,
         args=(matriz_covariancia, vetor_alvo),
+        jac=gradiente_objetivo,
         method='SLSQP',
         bounds=[(1e-19, 1)] * numero_ativos,
-        constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
+        constraints={
+            'type': 'eq',
+            'fun': lambda x: np.sum(x) - 1.0,
+            'jac': lambda x: np.ones(numero_ativos),
+        },
         options={'maxiter': 1000, 'ftol': 1e-9}
     )
 
@@ -85,38 +116,30 @@ def resolver_paridade(matriz_covariancia, numero_ativos):
 # LOOP MENSAL
 # =============================================
 
+primeira_data_disponivel = tabela_ativos['Data'].iloc[0]
+
 for mes in pd.date_range(start=data_inicio_simulacao, end=data_fim_simulacao, freq='MS'):
 
-    # Primeiro dia útil do mês — data em que fazemos o rebalanceamento
+    # Primeiro dia útil do mês — data do rebalanceamento
     data_rebalanceamento = mes + pd.offsets.BMonthBegin(0)
-    datetime_rebalanceamento = data_rebalanceamento.replace(hour=16, minute=56, second=0)
 
-    # Janela de 1 ano de dados históricos usada para calcular os pesos
+    # Janela de 1 ano de histórico usada para estimar risco
     um_ano_antes = data_rebalanceamento - pd.DateOffset(years=1)
-
-    # Garante que não vamos além do início dos dados disponíveis
-    primeira_data_disponivel = tabela_ativos['Data'].min()
     if um_ano_antes < primeira_data_disponivel:
         um_ano_antes = primeira_data_disponivel
 
-    # Dados do último ano para calcular retornos e covariância
-    dados_ultimo_ano = tabela_ativos[(tabela_ativos['Data'] >= um_ano_antes) & (tabela_ativos['Data'] < data_rebalanceamento)]
-    dados_ultimo_ano_aux = tabela_ativos[(tabela_ativos['Data'] >= um_ano_antes) & (tabela_ativos['Data'] <= datetime_rebalanceamento)]
+    dados_ultimo_ano = recortar(um_ano_antes, data_rebalanceamento - pd.Timedelta(nanoseconds=1))
 
-    # Se não tiver dados suficientes, usa tudo que tiver disponível
     if len(dados_ultimo_ano) < 2:
-        dados_ultimo_ano = tabela_ativos[tabela_ativos['Data'] < data_rebalanceamento].copy()
-        dados_ultimo_ano_aux = tabela_ativos[tabela_ativos['Data'] <= datetime_rebalanceamento].copy()
+        dados_ultimo_ano = recortar(primeira_data_disponivel, data_rebalanceamento - pd.Timedelta(nanoseconds=1))
         if len(dados_ultimo_ano) < 2:
             continue
 
-    # Calcula os retornos percentuais diários do último ano
     retornos_historicos = dados_ultimo_ano[lista_ativos].pct_change().dropna()
     if retornos_historicos.empty:
         continue
 
     # ---- SELEÇÃO DE ATIVOS VÁLIDOS ----
-    # Começa com todos os ativos e vai removendo os que não atendem os critérios
     ativos_validos = lista_ativos.copy()
     otimizacao_bem_sucedida = False
 
@@ -125,87 +148,79 @@ for mes in pd.date_range(start=data_inicio_simulacao, end=data_fim_simulacao, fr
             break
 
         retornos_ativos_validos = retornos_historicos[ativos_validos]
-
-        # Calcula a volatilidade anualizada de cada ativo (em %)
         volatilidade_anualizada = retornos_ativos_validos.std() * (252 ** 0.5) * 100
 
-        # Remove ativos com volatilidade muito baixa (distorcem o solver)
         ativos_baixa_volatilidade = volatilidade_anualizada[volatilidade_anualizada < limiar_volatilidade_minima]
         if not ativos_baixa_volatilidade.empty:
             for ativo in ativos_baixa_volatilidade.index:
                 if ativo in ativos_validos:
                     ativos_validos.remove(ativo)
             if len(ativos_validos) <= 1:
-                otimizacao_bem_sucedida = False
                 break
+            retornos_ativos_validos = retornos_historicos[ativos_validos]
 
-        if len(ativos_validos) <= 1:
-            break
-
-        retornos_ativos_validos = retornos_historicos[ativos_validos]
-
-        # Calcula a matriz de covariância (escalonada por 1e-2 para estabilidade numérica)
         matriz_cov = retornos_ativos_validos.cov().values * 1e-2
 
         try:
-            # Verifica se a matriz é positiva definida (requisito do solver)
+            # Cholesky confirma que a matriz é positiva definida
             np.linalg.cholesky(matriz_cov)
             otimizacao_bem_sucedida = True
             break
         except np.linalg.LinAlgError:
-            # Matriz não é positiva definida — remove o ativo de menor volatilidade e tenta novamente
-            if len(ativos_validos) <= 1:
-                break
             ativo_menor_vol = volatilidade_anualizada.idxmin()
             if ativo_menor_vol in ativos_validos:
                 ativos_validos.remove(ativo_menor_vol)
             if len(ativos_validos) <= 1:
-                otimizacao_bem_sucedida = False
                 break
 
-    # Sem ativos suficientes, pula o mês
     if not otimizacao_bem_sucedida or len(ativos_validos) < 2:
         continue
 
-    # Recalcula a covariância com os ativos válidos finais
-    matriz_cov_final = retornos_historicos[ativos_validos].cov().values * 1e-2
-
-    # Resolve o otimizador e obtém os pesos ótimos de paridade de risco
-    pesos_otimos = resolver_paridade(matriz_cov_final, len(ativos_validos))
-
+    pesos_otimos = resolver_paridade(matriz_cov, ativos_validos)
     if pesos_otimos is None:
         continue
 
-    # Registra a alocação do mês para alimentar os gráficos de paridade
     pesos_ativos = {ativo: 0.0 for ativo in lista_ativos}
     for i, ativo in enumerate(ativos_validos):
         pesos_ativos[ativo] = float(pesos_otimos[i])
+    # Guarda tambem o alvo de risco usado no mes: e o que permite comparar
+    # "risco pedido" com "risco entregue" no grafico.
+    alvo_do_mes = montar_vetor_alvo(ativos_validos)
+    risco_alvo = {ativo: 0.0 for ativo in lista_ativos}
+    for i, ativo in enumerate(ativos_validos):
+        risco_alvo[ativo] = float(alvo_do_mes[i])
+
     alocacao_mensal.append({
         "data": data_rebalanceamento.strftime('%Y-%m-%d'),
-        "pesos": pesos_ativos
+        "pesos": pesos_ativos,
+        "risco_alvo": risco_alvo
     })
 
-    # Dados diários do mês atual (limitado à data fim da simulação)
+    # ---- RETORNO DIÁRIO DO MÊS ----
     inicio_mes = mes
-    fim_mes = mes + pd.offsets.MonthEnd(0)
-    fim_periodo = min(fim_mes, data_fim_simulacao)
-    dados_mes = tabela_ativos[(tabela_ativos['Data'] >= inicio_mes) & (tabela_ativos['Data'] <= fim_periodo)]
-
+    fim_periodo = min(mes + pd.offsets.MonthEnd(0), data_fim_simulacao)
+    dados_mes = recortar(inicio_mes, fim_periodo)
     if dados_mes.empty:
         continue
 
-    # Retornos percentuais diários dos ativos válidos neste mês
-    retornos_diarios = dados_mes[ativos_validos].pct_change().fillna(0)
+    # Preço do último pregão ANTES do mês: é a base do rebalanceamento. Sem ele
+    # o retorno da virada do mês se perdia (~5% dos pregões entravam como zero).
+    anteriores = recortar(primeira_data_disponivel, inicio_mes - pd.Timedelta(nanoseconds=1))
+    if anteriores.empty:
+        precos_base = dados_mes[ativos_validos].iloc[0].to_numpy(dtype=float)
+    else:
+        precos_base = anteriores[ativos_validos].iloc[-1].to_numpy(dtype=float)
 
-    # Retorno diário da carteira = soma ponderada pelos pesos ótimos
-    retorno_carteira_diario = (retornos_diarios * pesos_otimos).sum(axis=1)
+    # Rebalanceamento MENSAL: pesos fixos na virada, carteira flutuando até o
+    # mês seguinte. Toda a conta do mês vira uma multiplicação de matrizes —
+    # percorrer dia a dia com iterrows custava mais que o otimizador inteiro.
+    precos_mes = dados_mes[ativos_validos].to_numpy(dtype=float)
+    fatores = (precos_mes / precos_base) @ np.asarray(pesos_otimos, dtype=float)
+    valores = retorno_acumulado * fatores
 
-    # Acumula o retorno e registra cada dia no resultado
-    for data, retorno_do_dia in zip(dados_mes['Data'], retorno_carteira_diario):
-        retorno_acumulado *= (1 + retorno_do_dia)
-        resultado.append({
-            "data": data.strftime('%Y-%m-%d'),
-            "valor": float(retorno_acumulado - 1)  # -1 para transformar em % (0.03 = 3%)
-        })
+    for data_texto, valor in zip(dados_mes['Data'].dt.strftime('%Y-%m-%d'), valores):
+        resultado.append({"data": data_texto, "valor": float(valor - 1)})
+
+    retorno_acumulado = float(valores[-1])
 
 (alocacao_mensal if ('modo_retorno' in globals() and modo_retorno == 'alocacao') else resultado)`;

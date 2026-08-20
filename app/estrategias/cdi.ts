@@ -1,8 +1,7 @@
 export const codigoCDI = `import pandas as pd
 
-dados_cdi_df = pd.DataFrame(dados_cdi)
-dados_cdi_df['data'] = pd.to_datetime(dados_cdi_df['data'], dayfirst=True)
-dados_cdi_df['valor'] = dados_cdi_df['valor'].astype(float)
+# tabela_cdi já vem pronta do carregamento.
+dados_cdi_df = tabela_cdi
 
 inicio = pd.to_datetime(data_inicio)
 fim = pd.to_datetime(data_fim)

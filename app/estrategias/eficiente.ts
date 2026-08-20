@@ -1,18 +1,18 @@
 export const codigoEficiente = `import pandas as pd
 import numpy as np
 
-# Preparar dados dos ativos
-df = pd.DataFrame(dados_ativos)
-df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y %H:%M:%S')
-
+# tabela_precos e tabela_cdi já vêm prontas do carregamento: datas em datetime,
+# valores em float, linhas ordenadas. Montá-las aqui custaria ~85 ms por
+# estratégia, repetidos a cada simulação.
+df = tabela_precos
 ativos = list(tickers)
-for col in ativos:
-    df[col] = df[col].astype(str).str.replace(',', '.').astype(float)
+cdi_df = tabela_cdi
 
-# Preparar dados do CDI
-cdi_df = pd.DataFrame(dados_cdi)
-cdi_df['data'] = pd.to_datetime(cdi_df['data'], dayfirst=True)
-cdi_df['valor'] = cdi_df['valor'].astype(float)
+def recortar(inicio_, fim_):
+    """Fatia a tabela por data via busca binária, sem máscara booleana."""
+    i = np.searchsorted(datas_precos, np.datetime64(inicio_), side='left')
+    j = np.searchsorted(datas_precos, np.datetime64(fim_), side='right')
+    return df.iloc[i:j]
 
 inicio = pd.to_datetime(data_inicio)
 fim = pd.to_datetime(data_fim)
@@ -39,6 +39,12 @@ def calculate_investment(total_portfolio_value, weights, current_prices, asset_c
             quantities2[asset] = 0
     return quantities2
 
+# O aporte inicial vale para o PRIMEIRO mes efetivamente alocado.
+# Comparar 'month == inicio' nao funcionava: date_range(freq='MS') devolve
+# inicios de mes, entao com uma data como 03/01 o primeiro item ja e 01/02 e
+# a igualdade nunca acontecia — o aporte inicial era silenciosamente perdido.
+primeiro_aporte = True
+
 for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     investment_date = month + pd.offsets.BMonthBegin(0)
     investment_datetime = investment_date.replace(hour=16, minute=56, second=0)
@@ -48,8 +54,8 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     if one_year_before < first_date:
         one_year_before = first_date
 
-    yearly_data = df[(df['Data'] >= one_year_before) & (df['Data'] < investment_date)]
-    yearly_dataaux = df[(df['Data'] >= one_year_before) & (df['Data'] <= investment_datetime)]
+    yearly_data = recortar(one_year_before, investment_date - pd.Timedelta(nanoseconds=1))
+    yearly_dataaux = recortar(one_year_before, investment_datetime)
 
     if len(yearly_data) < 2:
         yearly_data = df[df['Data'] < investment_date].copy()
@@ -101,7 +107,8 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     if not success:
         if len(current_assets) == 1:
             only_asset = current_assets[0]
-            aporte = aporte_inicial if month == inicio else aporte_mensal
+            aporte = aporte_inicial if primeiro_aporte else aporte_mensal
+            primeiro_aporte = False
             current_price = yearly_dataaux.iloc[-1][only_asset]
             if current_price > 0:
                 quantities[only_asset] += aporte / current_price
@@ -109,7 +116,7 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
             start_of_month = month
             end_of_month = month + pd.offsets.MonthEnd(0)
             data_fim_periodo = min(end_of_month, fim)
-            daily_data = df[(df['Data'] >= start_of_month) & (df['Data'] <= data_fim_periodo)]
+            daily_data = recortar(start_of_month, data_fim_periodo)
             if not daily_data.empty:
                 daily_prices = daily_data[ativos].ffill()
                 portfolio_daily_values = daily_prices.multiply(list(quantities.values()), axis=1).sum(axis=1)
@@ -138,7 +145,8 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     for asset, pct in zip(current_assets, percentages):
         full_percentages[asset] = pct
 
-    aporte = aporte_inicial if month == inicio else aporte_mensal
+    aporte = aporte_inicial if primeiro_aporte else aporte_mensal
+    primeiro_aporte = False
     current_prices = yearly_dataaux.iloc[-1][ativos].to_dict()
     new_quantities = calculate_investment(aporte, list(full_percentages.values()), current_prices, ativos)
     for asset in ativos:
@@ -147,7 +155,7 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     start_of_month = month
     end_of_month = month + pd.offsets.MonthEnd(0)
     data_fim_periodo = min(end_of_month, fim)
-    daily_data = df[(df['Data'] >= start_of_month) & (df['Data'] <= data_fim_periodo)]
+    daily_data = recortar(start_of_month, data_fim_periodo)
 
     if not daily_data.empty:
         daily_prices = daily_data[ativos].ffill()

@@ -5,22 +5,17 @@ import numpy as np
 # PREPARAÇÃO DOS DADOS
 # =============================================
 
-# Converte a lista de dicionários recebida do JavaScript em uma tabela (DataFrame)
-tabela_ativos = pd.DataFrame(dados_ativos)
-
-# Converte a coluna de datas para o formato de data do pandas
-tabela_ativos['Data'] = pd.to_datetime(tabela_ativos['Data'], format='%d/%m/%Y %H:%M:%S')
-
-# Converte os valores dos ativos de string para número
-# (necessário porque o CSV usa vírgula como separador decimal)
+# tabela_precos e tabela_cdi já vêm prontas do carregamento: datas em datetime,
+# valores em float, linhas ordenadas. Montá-las aqui custaria ~85 ms por
+# estratégia, repetidos a cada simulação.
+tabela_ativos = tabela_precos
 lista_ativos = list(tickers)
-for ativo in lista_ativos:
-    tabela_ativos[ativo] = tabela_ativos[ativo].astype(str).str.replace(',', '.').astype(float)
 
-# Prepara os dados do CDI — usado como taxa livre de risco no cálculo dos pesos
-tabela_cdi = pd.DataFrame(dados_cdi)
-tabela_cdi['data'] = pd.to_datetime(tabela_cdi['data'], dayfirst=True)
-tabela_cdi['valor'] = tabela_cdi['valor'].astype(float)
+def recortar(inicio, fim):
+    """Fatia a tabela por data via busca binária, sem máscara booleana."""
+    i = np.searchsorted(datas_precos, np.datetime64(inicio), side='left')
+    j = np.searchsorted(datas_precos, np.datetime64(fim), side='right')
+    return tabela_ativos.iloc[i:j]
 
 # Define o período da simulação
 data_inicio_simulacao = pd.to_datetime(data_inicio)
@@ -111,7 +106,7 @@ for mes in pd.date_range(start=data_inicio_simulacao, end=data_fim_simulacao, fr
         um_ano_antes = primeira_data_disponivel
 
     # Dados do último ano para calcular retornos e covariância
-    dados_ultimo_ano = tabela_ativos[(tabela_ativos['Data'] >= um_ano_antes) & (tabela_ativos['Data'] < data_rebalanceamento)]
+    dados_ultimo_ano = recortar(um_ano_antes, data_rebalanceamento - pd.Timedelta(nanoseconds=1))
     dados_ultimo_ano_aux = tabela_ativos[(tabela_ativos['Data'] >= um_ano_antes) & (tabela_ativos['Data'] <= datetime_rebalanceamento)]
 
     # Se não tiver dados suficientes, usa tudo que tiver disponível
@@ -194,23 +189,29 @@ for mes in pd.date_range(start=data_inicio_simulacao, end=data_fim_simulacao, fr
     inicio_mes = mes
     fim_mes = mes + pd.offsets.MonthEnd(0)
     fim_periodo = min(fim_mes, data_fim_simulacao)
-    dados_mes = tabela_ativos[(tabela_ativos['Data'] >= inicio_mes) & (tabela_ativos['Data'] <= fim_periodo)]
+    dados_mes = recortar(inicio_mes, fim_periodo)
 
     if dados_mes.empty:
         continue
 
-    # Retornos percentuais diários dos ativos válidos neste mês
-    retornos_diarios = dados_mes[ativos_validos].pct_change().fillna(0)
+    # Preço do último pregão ANTES do mês: é a base do rebalanceamento. Sem ele
+    # o retorno da virada do mês se perdia (~5% dos pregões viravam zero).
+    anteriores = recortar(tabela_ativos['Data'].iloc[0], inicio_mes - pd.Timedelta(nanoseconds=1))
+    if anteriores.empty:
+        precos_base = dados_mes[ativos_validos].iloc[0].to_numpy(dtype=float)
+    else:
+        precos_base = anteriores[ativos_validos].iloc[-1].to_numpy(dtype=float)
 
-    # Retorno diário da carteira = soma ponderada pelos pesos ótimos
-    retorno_carteira_diario = (retornos_diarios * pesos_otimos).sum(axis=1)
+    # Rebalanceamento MENSAL vetorizado: pesos fixos na virada (podem ser
+    # negativos — venda a descoberto) e o mês inteiro vira uma multiplicação
+    # de matrizes, em vez de um laço dia a dia com iterrows.
+    precos_mes = dados_mes[ativos_validos].to_numpy(dtype=float)
+    fatores = (precos_mes / precos_base) @ np.asarray(pesos_otimos, dtype=float)
+    valores = retorno_acumulado * fatores
 
-    # Acumula o retorno e registra cada dia no resultado
-    for data, retorno_do_dia in zip(dados_mes['Data'], retorno_carteira_diario):
-        retorno_acumulado *= (1 + retorno_do_dia)
-        resultado.append({
-            "data": data.strftime('%Y-%m-%d'),
-            "valor": float(retorno_acumulado - 1)  # -1 para transformar em % (0.03 = 3%)
-        })
+    for data_texto, valor in zip(dados_mes['Data'].dt.strftime('%Y-%m-%d'), valores):
+        resultado.append({"data": data_texto, "valor": float(valor - 1)})
+
+    retorno_acumulado = float(valores[-1])
 
 resultado`;

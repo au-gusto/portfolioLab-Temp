@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# ── Dependências ─────────────────────────────────────────────────────────────
 /node_modules
 /.pnp
 .pnp.*
@@ -10,38 +8,79 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ── Build ────────────────────────────────────────────────────────────────────
 /.next/
 /out/
-
-# production
 /build
+*.tsbuildinfo
 
-# misc
-.DS_Store
+# ── Segredos ─────────────────────────────────────────────────────────────────
+# Chaves do Supabase e afins. NUNCA versionar: uma vez no histórico do git,
+# só some reescrevendo a história do repositório inteiro.
+.env
+.env.*
+!.env.example
 *.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
 
-# debug
+# ── Ferramentas de IA e editores ─────────────────────────────────────────────
+.claude/
+.cursor/
+.cursorrules
+.cursorignore
+.aider*
+.windsurf/
+.continue/
+.github/copilot-instructions.md
+CLAUDE.md
+AGENTS.md
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+
+# ── Deploy ───────────────────────────────────────────────────────────────────
+.vercel
+.netlify
+
+# ── Testes e cobertura ───────────────────────────────────────────────────────
+/coverage
+.nyc_output
+
+# ── Sistema operacional ──────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Logs e temporários ───────────────────────────────────────────────────────
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+/tmp
+/temp
+*.tmp
+*.bak
+*.orig
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# LLM / agent assistants
-.claude/
-.cursor/
-.aider*
-CLAUDE.md
+# ── Python (scripts de análise avulsos) ──────────────────────────────────────
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/

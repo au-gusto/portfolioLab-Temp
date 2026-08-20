@@ -1,176 +1,174 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
-interface Ponto {
-  data: string;
-  valor: number;
-}
+import { ESTRATEGIAS } from "../lib/estrategias-meta";
+import { reduzirPontos, PONTOS_NO_GRAFICO } from "../lib/amostragem";
 
-interface ConfigSimulacao {
-  dataInicio: string;
-  dataFim: string;
-}
+interface Ponto { data: string; valor: number }
+interface ConfigSimulacao { dataInicio: string; dataFim: string }
 
 interface Props {
-  dados: {
-    cdi: Ponto[] | null;
-    paridade: Ponto[] | null;
-    eficiente: Ponto[] | null;
-    ingenua: Ponto[] | null;
-  };
+  dados: Partial<Record<string, Ponto[] | null>>;
   config: ConfigSimulacao | null;
+  /** Quais séries o modo atual permite, na ordem do catálogo. */
+  series: string[];
 }
 
-const ESTRATEGIAS_CONFIG = [
-  { id: "cdi",      label: "CDI",               cor: "var(--azul-claro)" },
-  { id: "paridade", label: "Paridade de Risco",  cor: "var(--verde)"  },
-  { id: "eficiente",label: "Carteira Eficiente", cor: "var(--azul)"   },
-  { id: "ingenua",  label: "Ingênua",            cor: "var(--amarelo)"},
-];
-
-export default function Grafico({ dados, config }: Props) {
-  
-  // ---- CARDS ----
-  const [valorReferencia, setValorReferencia] = useState(1000);
-  
-  // ---- CHART DATA ----
-  const combined: Record<string, any> = {};
-
-  ESTRATEGIAS_CONFIG.forEach(({ id }) => {
-    const serie = dados[id as keyof typeof dados];
-    if (serie) {
-      serie.forEach((item) => {
-        if (!combined[item.data]) combined[item.data] = { data: item.data };
-        combined[item.data][id] = item.valor;
-      });
-    }
+/** 2.1234 -> "+212,34%". Duas casas, sempre, com sinal explícito. */
+function porcentagem(v: number, comSinal = true): string {
+  if (typeof v !== "number" || Number.isNaN(v)) return "—";
+  const n = (v * 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
   });
+  return (comSinal && v >= 0 ? "+" : "") + n + "%";
+}
 
-  const chartData = Object.values(combined).sort((a, b) =>
-    a.data.localeCompare(b.data)
-  );
+function reais(v: number): string {
+  return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-  // ffill
-  const lastValues: Record<string, number | null> = { cdi: null, paridade: null, eficiente: null, ingenua: null };
-  chartData.forEach((item: any) => {
-    ESTRATEGIAS_CONFIG.forEach(({ id }) => {
-      if (item[id] !== undefined) lastValues[id] = item[id];
-      else item[id] = lastValues[id];
+function mesAno(iso: string): string {
+  const [ano, mes] = iso.split("-");
+  const nomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  return `${nomes[Number(mes) - 1]}/${ano.slice(-2)}`;
+}
+
+export default function Grafico({ dados, config, series }: Props) {
+  const [valorReferencia, setValorReferencia] = useState(1000);
+
+  // Junta as séries por data e repete o último valor conhecido nos dias em que
+  // uma estratégia não tem ponto, para as linhas não ficarem picotadas.
+  const combinado: Record<string, Record<string, number | string>> = {};
+  const doModo = ESTRATEGIAS.filter((e) => series.includes(e.id));
+
+  doModo.forEach(({ id }) => {
+    const serie = dados[id];
+    serie?.forEach((item) => {
+      if (!combinado[item.data]) combinado[item.data] = { data: item.data };
+      combinado[item.data][id] = item.valor;
     });
   });
 
+  const chartDataCompleto = Object.values(combinado).sort((a, b) =>
+    String(a.data).localeCompare(String(b.data))
+  );
+
+  const ultimos: Record<string, number | null> = Object.fromEntries(series.map((s) => [s, null]));
+  chartDataCompleto.forEach((item) => {
+    const doModo = ESTRATEGIAS.filter((e) => series.includes(e.id));
+
+  doModo.forEach(({ id }) => {
+      if (item[id] !== undefined) ultimos[id] = item[id] as number;
+      else if (ultimos[id] !== null) item[id] = ultimos[id] as number;
+    });
+  });
+
+  // Reduz os pontos só para desenhar. Os cartões acima continuam lendo a série
+  // completa, então nenhum número muda — só o custo de pintar o SVG.
+  const chartData = useMemo(
+    () => reduzirPontos(chartDataCompleto, PONTOS_NO_GRAFICO, (p) => Number(p["paridade"] ?? 0)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chartDataCompleto.length, chartDataCompleto[0]?.data, chartDataCompleto[chartDataCompleto.length - 1]?.data]
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-      
-      {/* CARDS */}
       {config && (
-        <div style={{ display: "flex", gap: "12px" }}>
-
-          {/* Card Valor de Referência */}
-          <div style={{
-            flex: 1,
-            background: "var(--fundo-card)",
-            border: "1px solid var(--borda)",
-            borderTop: "3px solid var(--texto-suave)",
-            borderRadius: "8px",
-            padding: "12px 16px",
-          }}>
-            <p style={{ color: "var(--texto-suave)", fontSize: "11px", marginBottom: "6px", textTransform: "uppercase" }}>
-              Valor de Referência
-            </p>
-            <input
-              type="text"
-              value={valorReferencia}
-              onChange={(e) => {
-                const num = Number(e.target.value.replace(/\D/g, ""));
-                if (!isNaN(num)) setValorReferencia(num);
-              }}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "var(--texto)",
-                fontSize: "20px",
-                fontWeight: 700,
-                width: "100%",
-                outline: "none",
-              }}
-            />
+        <div className="metricas">
+          <div className="metrica metrica--editavel">
+            <p className="metrica__rotulo">Se eu tivesse investido</p>
+            <div className="metrica__entrada">
+              <span aria-hidden="true">R$</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                className="tabular"
+                value={valorReferencia.toLocaleString("pt-BR")}
+                onChange={(e) => {
+                  const n = Number(e.target.value.replace(/\D/g, ""));
+                  if (!Number.isNaN(n)) setValorReferencia(n);
+                }}
+                aria-label="Valor de referência em reais"
+              />
+            </div>
           </div>
 
-          {/* Cards das estratégias */}
-          {ESTRATEGIAS_CONFIG.map(({ id, label, cor }) => {
-            const serie = dados[id as keyof typeof dados];
-            if (!serie || serie.length === 0) return null;
+          {doModo.map(({ id, titulo, cor }) => {
+            const serie = dados[id];
+            if (!serie?.length) return null;
             const ultimo = serie[serie.length - 1];
             if (!ultimo || typeof ultimo.valor !== "number" || Number.isNaN(ultimo.valor)) return null;
-            const retorno = ultimo.valor * 100;
-            const valorFinal = valorReferencia * (1 + ultimo.valor);
-            const positivo = retorno >= 0;
+            const positivo = ultimo.valor >= 0;
             return (
-              <div key={id} style={{
-                flex: 1,
-                background: "var(--fundo-card)",
-                border: "1px solid var(--borda)",
-                borderTop: `3px solid ${cor}`,
-                borderRadius: "8px",
-                padding: "12px 16px",
-              }}>
-                <p style={{ color: "var(--texto-suave)", fontSize: "11px", marginBottom: "6px", textTransform: "uppercase" }}>
-                  {label}
+              <div key={id} className="metrica" style={{ borderTopColor: cor }}>
+                <p className="metrica__rotulo">{titulo}</p>
+                <p
+                  className="metrica__valor tabular"
+                  style={{ color: positivo ? "var(--positivo)" : "var(--negativo)" }}
+                >
+                  {porcentagem(ultimo.valor)}
                 </p>
-                <p style={{ color: positivo ? "var(--verde)" : "var(--vermelho)", fontSize: "20px", fontWeight: 700 }}>
-                  {positivo ? "+" : ""}{retorno.toFixed(1)}%
-                </p>
-                <p style={{ color: "var(--texto-suave)", fontSize: "12px", marginTop: "4px" }}>
-                  R$ {valorFinal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                <p className="metrica__extra tabular">
+                  {reais(valorReferencia * (1 + ultimo.valor))}
                 </p>
               </div>
             );
           })}
-
         </div>
       )}
 
-      {/* GRÁFICO */}
-      <div style={{ width: "100%", height: 400 }}>
-        <ResponsiveContainer>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" />
-            <XAxis
-              dataKey="data"
-              stroke="var(--texto-suave)"
-              tickFormatter={(value) => {
-                // value no formato "YYYY-MM-DD"
-                const [ano, mes] = value.split('-');     // ignoramos o dia
-                const data = new Date(ano, mes - 1, 1);  // cria data com o mês correto
-                // Exibe "mmm/aa" (inglês) – ex: "May/22"
-                return data.toLocaleString('en', { month: 'short' }) + '/' + ano.slice(-2);
-              }}
-            />
-            <YAxis stroke="var(--texto-suave)" />
-            <Tooltip
-              contentStyle={{ background: "var(--fundo-card)", borderColor: "var(--borda)" }}
-            />
-            <Legend />
-            {dados.cdi      && <Line type="monotone" dataKey="cdi"       stroke="var(--azul-claro)"   name="CDI"               dot={false} />}
-            {dados.paridade && <Line type="monotone" dataKey="paridade"  stroke="var(--verde)"   name="Paridade de Risco" dot={false} />}
-            {dados.eficiente && <Line type="monotone" dataKey="eficiente" stroke="var(--azul)"    name="Carteira Eficiente" dot={false} />}
-            {dados.ingenua  && <Line type="monotone" dataKey="ingenua"   stroke="var(--amarelo)" name="Ingênua"           dot={false} />}
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="cartao">
+        <p className="secao__titulo">Retorno acumulado</p>
+        <div className="grafico">
+          <ResponsiveContainer>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" />
+              <XAxis
+                dataKey="data"
+                stroke="var(--texto-suave)"
+                tick={{ fontSize: 11 }}
+                minTickGap={64}
+                tickFormatter={(v) => mesAno(String(v))}
+              />
+              <YAxis
+                stroke="var(--texto-suave)"
+                tick={{ fontSize: 11 }}
+                width={70}
+                tickFormatter={(v) => porcentagem(Number(v), false)}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--fundo-elevado)",
+                  borderColor: "var(--borda)",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                }}
+                labelFormatter={(v) => {
+                  const [a, m, d] = String(v).split("-");
+                  return `${d}/${m}/${a}`;
+                }}
+                formatter={(v, nome) => [porcentagem(Number(v)), String(nome)]}
+              />
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              {doModo.map(({ id, titulo, cor, tracejado }) =>
+                dados[id] ? (
+                  <Line
+                    key={id} type="monotone" dataKey={id} stroke={cor}
+                    name={titulo} dot={false} strokeWidth={2}
+                    strokeDasharray={tracejado ? "5 4" : undefined}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                ) : null
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
-
     </div>
   );
 }

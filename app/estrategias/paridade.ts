@@ -2,13 +2,16 @@ export const codigoParidade = `import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
 
-# Preparar dados dos ativos
-df = pd.DataFrame(dados_ativos)
-df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y %H:%M:%S')
-
+# tabela_precos já vem pronta do carregamento: datas em datetime, preços em
+# float, linhas ordenadas. Montá-la aqui custaria ~85 ms por estratégia.
+df = tabela_precos
 ativos = list(tickers)
-for col in ativos:
-    df[col] = df[col].astype(str).str.replace(',', '.').astype(float)
+
+def recortar(inicio, fim):
+    """Fatia a tabela por data via busca binária, sem máscara booleana."""
+    i = np.searchsorted(datas_precos, np.datetime64(inicio), side='left')
+    j = np.searchsorted(datas_precos, np.datetime64(fim), side='right')
+    return df.iloc[i:j]
 
 inicio = pd.to_datetime(data_inicio)
 fim = pd.to_datetime(data_fim)
@@ -25,14 +28,37 @@ def objective(x, cov_matrix, b):
     w = x / sqrt_variance
     return 0.5 * np.dot(w, b / (w + 1e-18)) - np.dot(b, np.log(w + 1e-18))
 
-def solve_paridade(cov_matrix, n):
-    b = np.ones(n) / n
+def gradiente(x, cov_matrix, b):
+    """Derivada exata da objetivo. Sem ela o SLSQP estima o gradiente por
+    diferenças finitas — uma avaliação extra por ativo a cada passo."""
+    sigma_x = np.dot(cov_matrix, x)
+    variancia = float(np.dot(x, sigma_x))
+    if variancia <= 0:
+        return np.zeros_like(x)
+    return -b / (x + 1e-18) + sigma_x / variancia
+
+def montar_b(ativos_do_mes):
+    """Fatia de risco por ativo. Sem orcamento, 1/n (paridade classica).
+    Com orcamento, o que o usuario pediu — renormalizado sobre os ativos que
+    sobreviveram ao filtro de volatilidade."""
+    n = len(ativos_do_mes)
+    if not orcamento_risco:
+        return np.ones(n) / n
+    alvo = np.array([float(orcamento_risco.get(a, 0.0)) for a in ativos_do_mes], dtype=float)
+    total = alvo.sum()
+    return np.ones(n) / n if total <= 0 else alvo / total
+
+def solve_paridade(cov_matrix, ativos_do_mes):
+    n = len(ativos_do_mes)
+    b = montar_b(ativos_do_mes)
     x0 = np.ones(n) / n
     result = minimize(
         objective, x0, args=(cov_matrix, b),
+        jac=gradiente,
         method='SLSQP',
         bounds=[(1e-19, 1)] * n,
-        constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},
+        constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0,
+                     'jac': lambda x: np.ones(n)},
         options={'maxiter': 1000, 'ftol': 1e-9}
     )
     if not result.success:
@@ -44,6 +70,12 @@ resultado = []
 alocacao_mensal = []
 min_vol_threshold = 13
 
+# O aporte inicial vale para o PRIMEIRO mes efetivamente alocado.
+# Comparar 'month == inicio' nao funcionava: date_range(freq='MS') devolve
+# inicios de mes, entao com uma data como 03/01 o primeiro item ja e 01/02 e
+# a igualdade nunca acontecia — o aporte inicial era silenciosamente perdido.
+primeiro_aporte = True
+
 for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     investment_date = month + pd.offsets.BMonthBegin(0)
     investment_datetime = investment_date.replace(hour=16, minute=56, second=0)
@@ -54,8 +86,8 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     if one_year_before < first_date:
         one_year_before = first_date
 
-    yearly_data = df[(df['Data'] >= one_year_before) & (df['Data'] < investment_date)]
-    yearly_dataaux = df[(df['Data'] >= one_year_before) & (df['Data'] <= investment_datetime)]
+    yearly_data = recortar(one_year_before, investment_date - pd.Timedelta(nanoseconds=1))
+    yearly_dataaux = recortar(one_year_before, investment_datetime)
 
     # Se não houver dados anuais suficientes, usa todos os dados disponíveis
     if len(yearly_data) < 2:
@@ -112,7 +144,8 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
         # Se sobrou apenas um ativo, investe 100% nele
         if len(current_assets) == 1:
             only_asset = current_assets[0]
-            aporte = aporte_inicial if month == inicio else aporte_mensal
+            aporte = aporte_inicial if primeiro_aporte else aporte_mensal
+            primeiro_aporte = False
             if yearly_dataaux.empty:
                 continue
             current_price = yearly_dataaux.iloc[-1][only_asset]
@@ -130,23 +163,28 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
             end_of_month = month + pd.offsets.MonthEnd(0)
             # Limita até a data final
             data_fim_periodo = min(end_of_month, fim)
-            daily_data = df[(df['Data'] >= start_of_month) & (df['Data'] <= data_fim_periodo)]
+            daily_data = recortar(start_of_month, data_fim_periodo)
             if not daily_data.empty:
-                for _, row in daily_data.iterrows():
-                    valor = sum(float(row[a]) * quantities[a] for a in ativos)
-                    resultado.append({"data": row['Data'].strftime('%Y-%m-%d'), "valor": float(valor)})
+                # Valor da carteira dia a dia = matriz de preços x vetor de
+                # quantidades. Antes era um iterrows com uma soma em Python por
+                # dia — mais caro que o otimizador inteiro.
+                vetor_qtd = np.array([quantities[a] for a in ativos], dtype=float)
+                valores = daily_data[ativos].to_numpy(dtype=float) @ vetor_qtd
+                for data_texto, valor in zip(daily_data['Data'].dt.strftime('%Y-%m-%d'), valores):
+                    resultado.append({"data": data_texto, "valor": float(valor)})
         continue
 
     if len(current_assets) < 2:
         continue
 
     cov_matrix = returns[current_assets].cov().values * 1e-2
-    optimal_x = solve_paridade(cov_matrix, len(current_assets))
+    optimal_x = solve_paridade(cov_matrix, current_assets)
 
     if optimal_x is None:
         continue
 
-    aporte = aporte_inicial if month == inicio else aporte_mensal
+    aporte = aporte_inicial if primeiro_aporte else aporte_mensal
+    primeiro_aporte = False
     if yearly_dataaux.empty:
         continue
     current_prices = yearly_dataaux.iloc[-1][current_assets].to_dict()
@@ -168,11 +206,12 @@ for month in pd.date_range(start=inicio, end=fim, freq='MS'):
     end_of_month = month + pd.offsets.MonthEnd(0)
     # Limita até a data final
     data_fim_periodo = min(end_of_month, fim)
-    daily_data = df[(df['Data'] >= start_of_month) & (df['Data'] <= data_fim_periodo)]
+    daily_data = recortar(start_of_month, data_fim_periodo)
 
     if not daily_data.empty:
-        for _, row in daily_data.iterrows():
-            valor = sum(float(row[a]) * quantities[a] for a in ativos)
-            resultado.append({"data": row['Data'].strftime('%Y-%m-%d'), "valor": float(valor)})
+        vetor_qtd = np.array([quantities[a] for a in ativos], dtype=float)
+        valores = daily_data[ativos].to_numpy(dtype=float) @ vetor_qtd
+        for data_texto, valor in zip(daily_data['Data'].dt.strftime('%Y-%m-%d'), valores):
+            resultado.append({"data": data_texto, "valor": float(valor)})
 
 (alocacao_mensal if ('modo_retorno' in globals() and modo_retorno == 'alocacao') else resultado)`;

@@ -1,0 +1,18 @@
+# Normaliza tudo para LF no repositorio.
+#
+# Sem isto, o Windows grava CRLF, a GitHub Action roda em Linux e ve o arquivo
+# inteiro como modificado — cada atualizacao diaria viraria um diff de 2 mil
+# linhas no CSV em vez das poucas linhas realmente novas.
+* text=auto eol=lf
+
+# Binarios: nao mexer.
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Os CSVs de cotacoes sao dados gerados: some do diff por padrao para o
+# "Files changed" das PRs continuar legivel.
+public/Dados/*.csv linguist-generated=true

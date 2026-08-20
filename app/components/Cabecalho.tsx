@@ -1,41 +1,98 @@
+"use client";
+
+import type { StatusDados } from "../lib/fonte-dados";
+import Icone from "./Icone";
+import Ajuda from "./Ajuda";
+import AlternarTema from "./AlternarTema";
+
 interface Props {
   painelAberto: boolean;
   setPainelAberto: (valor: boolean) => void;
+  lateralAberta: boolean;
+  setLateralAberta: (valor: boolean) => void;
+  status: StatusDados;
 }
 
-export default function Cabecalho({ painelAberto, setPainelAberto }: Props) {
+/** Quantos dias corridos separam a data do último pregão de hoje. */
+function diasDesde(iso: string | null): number | null {
+  if (!iso) return null;
+  const alvo = new Date(iso + "T00:00:00");
+  if (Number.isNaN(alvo.getTime())) return null;
+  return Math.floor((Date.now() - alvo.getTime()) / 86400000);
+}
+
+function formatarBR(iso: string | null): string {
+  if (!iso) return "—";
+  const [a, m, d] = iso.split("-");
+  return `${d}/${m}/${a}`;
+}
+
+/**
+ * Selo de atualidade dos dados.
+ *
+ * Existe porque o app já rodou 14 meses com cotações congeladas sem que nada
+ * na tela indicasse isso. O ponto colorido dá o recado sem texto: verde é
+ * fresco, âmbar está envelhecendo, vermelho é velho demais para confiar.
+ */
+function SeloDados({ status }: { status: StatusDados }) {
+  const dias = diasDesde(status.ultimoPregao);
+  const cor =
+    dias === null ? "var(--texto-suave)"
+    : dias <= 4 ? "var(--positivo)"
+    : dias <= 30 ? "var(--atencao)"
+    : "var(--negativo)";
+
   return (
-    <header style={{ 
-      background: "var(--fundo-card)", 
-      borderBottom: "1px solid var(--borda)",
-      padding: "16px 20px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between"
-    }}>
-      <div>
-        <h1 style={{ color: "var(--verde)", fontSize: "18px", fontWeight: "bold" }}>
-          Portfolio Lab
-        </h1>
-        <p style={{ color: "var(--texto-suave)", fontSize: "12px" }}>
-          Mercado brasileiro · B3
-        </p>
+    <span className="selo">
+      <span className="selo__ponto" style={{ background: cor }} />
+      <span className="tabular">{formatarBR(status.ultimoPregao)}</span>
+      <Ajuda alinhar="direita">
+        Data do último pregão nos dados
+        {dias !== null && ` — ${dias} dia${dias === 1 ? "" : "s"} atrás`}.
+        As cotações são atualizadas uma vez por dia, após o fechamento.
+      </Ajuda>
+    </span>
+  );
+}
+
+export default function Cabecalho({
+  painelAberto,
+  setPainelAberto,
+  lateralAberta,
+  setLateralAberta,
+  status,
+}: Props) {
+  return (
+    <header className="cabecalho">
+      <div className="cabecalho__marca">
+        <h1 className="cabecalho__titulo">Portfolio Lab</h1>
+        <p className="cabecalho__sub">B3</p>
       </div>
 
-      <button
-        onClick={() => setPainelAberto(!painelAberto)}
-        style={{
-          background: "none",
-          border: "1px solid var(--borda)",
-          borderRadius: "6px",
-          padding: "8px",
-          cursor: "pointer",
-          color: "var(--texto)",
-          fontSize: "18px"
-        }}
-      >
-        ☰
-      </button>
+      <div className="cabecalho__acoes">
+        <SeloDados status={status} />
+        <AlternarTema />
+
+        {/* Abre a gaveta de configuração no celular */}
+        <button
+          className="botao-icone so-celular"
+          onClick={() => setLateralAberta(!lateralAberta)}
+          aria-expanded={lateralAberta}
+          aria-label={lateralAberta ? "Fechar configuração" : "Abrir configuração"}
+        >
+          <Icone nome={lateralAberta ? "fechar" : "ajustes"} tamanho={17} />
+        </button>
+
+        <button
+          className="botao-icone"
+          onClick={() => setPainelAberto(!painelAberto)}
+          aria-expanded={painelAberto}
+          aria-label="Editar o código Python das estratégias"
+          title="Editar o código Python das estratégias"
+        >
+          <Icone nome="codigo" tamanho={17} />
+        </button>
+      </div>
     </header>
   );
 }

@@ -1,23 +1,169 @@
 @import "tailwindcss";
 
 :root {
-  --fundo: #080C10;
-  --fundo-card: #0D1117;
-  --borda: #30363D;
-  --texto: #E6EDF3;
-  --texto-suave: #8B949E;
-  --verde: #39D353;
-  --azul: #58A6FF;
-  --amarelo: #E3B341;
-  --vermelho: #F85149;
-  --azul-claro: #93C5FD;
+  color-scheme: light;
+
+  /* Neutros levemente frios, para não brigar com o teal da marca. */
+  --fundo: #F4F6F8;
+  --fundo-card: #FFFFFF;
+  --fundo-elevado: #EBEEF2;
+  --borda: #D7DCE3;
+  --borda-suave: #E6E9EE;
+  --texto: #171A1F;
+  --texto-suave: #5A616D;
+
+  /* Marca. Teal em vez do verde-neon: mesma leitura de "ação", menos ruído. */
+  --primaria: #0A6E63;
+  --primaria-forte: #075349;
+  --sobre-primaria: #FFFFFF;
+
+  /* Semânticas — separadas das cores de série de propósito. */
+  --positivo: #0A6E63;
+  --negativo: #C2453B;
+  --atencao: #8A5B09;
+  --info: #2C6FB5;
+
+  /* Fundos translúcidos dos avisos. */
+  --atencao-fundo: rgba(176, 116, 12, 0.10);
+  --info-fundo: rgba(44, 111, 181, 0.09);
+  --negativo-fundo: rgba(194, 69, 59, 0.09);
+
+  /* Séries dos gráficos. O CDI é de propósito o mais apagado: é referência,
+     não competidor. Os outros três se separam por matiz e por luminosidade,
+     então continuam distinguíveis em preto e branco. */
+  --serie-paridade: #0D8B7D;
+  --serie-cdi: #6B7684;
+  --serie-eficiente: #2C6FB5;
+  --serie-ingenua: #C2810B;
+  --serie-ibov: #6D4AA8;
+  --serie-ipca: #A8443C;
+  --serie-poupanca: #7A8A5C;
+
+  /* Paleta categórica dos gráficos de alocação — um ativo por cor.
+     Matizes bem espaçados e luminosidade parecida, para nenhum ativo
+     parecer mais importante que outro só por ser mais claro. */
+  --cat-1: #0A6E63;
+  --cat-2: #2C6FB5;
+  --cat-3: #B0740C;
+  --cat-4: #A8443C;
+  --cat-5: #6D4AA8;
+  --cat-6: #0F7C8C;
+  --cat-7: #A83C6E;
+  --cat-8: #5C7A25;
+
+  /* Medidas repetidas o bastante para merecerem nome */
+  --lateral: 340px;
+  --altura-cabecalho: 57px;
+  --raio: 10px;
+  --raio-p: 7px;
+
+  --sombra: 0 1px 2px rgba(16, 19, 24, 0.05), 0 8px 24px rgba(16, 19, 24, 0.07);
 }
+
+/* Sem escolha explícita, segue o sistema. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+
+    --fundo: #101318;
+    --fundo-card: #171B22;
+    --fundo-elevado: #1F242D;
+    --borda: #2C333E;
+    --borda-suave: #232932;
+    --texto: #E7E9ED;
+    --texto-suave: #97A0AD;
+
+    --primaria: #2DD4BF;
+    --primaria-forte: #5EEAD4;
+    --sobre-primaria: #07211E;
+
+    --positivo: #34D399;
+    --negativo: #F1706A;
+    --atencao: #E0AE4E;
+    --info: #6BA6E8;
+
+    --atencao-fundo: rgba(224, 174, 78, 0.12);
+    --info-fundo: rgba(107, 166, 232, 0.11);
+    --negativo-fundo: rgba(241, 112, 106, 0.11);
+
+    --serie-paridade: #2DD4BF;
+    --serie-cdi: #8A94A3;
+    --serie-eficiente: #6BA6E8;
+    --serie-ingenua: #E0AE4E;
+    --serie-ibov: #B99BF0;
+    --serie-ipca: #F0796F;
+    --serie-poupanca: #A8CC5E;
+
+    --cat-1: #2DD4BF;
+    --cat-2: #6BA6E8;
+    --cat-3: #E0AE4E;
+    --cat-4: #F0796F;
+    --cat-5: #B99BF0;
+    --cat-6: #4CC5D9;
+    --cat-7: #EE84B4;
+    --cat-8: #A8CC5E;
+
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Escolha explícita do usuário vence o sistema, nos dois sentidos. */
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+
+  --fundo: #101318;
+  --fundo-card: #171B22;
+  --fundo-elevado: #1F242D;
+  --borda: #2C333E;
+  --borda-suave: #232932;
+  --texto: #E7E9ED;
+  --texto-suave: #97A0AD;
+
+  --primaria: #2DD4BF;
+  --primaria-forte: #5EEAD4;
+  --sobre-primaria: #07211E;
+
+  --positivo: #34D399;
+  --negativo: #F1706A;
+  --atencao: #E0AE4E;
+  --info: #6BA6E8;
+
+  --atencao-fundo: rgba(224, 174, 78, 0.12);
+  --info-fundo: rgba(107, 166, 232, 0.11);
+  --negativo-fundo: rgba(241, 112, 106, 0.11);
+
+  --serie-paridade: #2DD4BF;
+  --serie-cdi: #8A94A3;
+  --serie-eficiente: #6BA6E8;
+  --serie-ingenua: #E0AE4E;
+  --serie-ibov: #B99BF0;
+  --serie-ipca: #F0796F;
+  --serie-poupanca: #A8CC5E;
+
+  --cat-1: #2DD4BF;
+  --cat-2: #6BA6E8;
+  --cat-3: #E0AE4E;
+  --cat-4: #F0796F;
+  --cat-5: #B99BF0;
+  --cat-6: #4CC5D9;
+  --cat-7: #EE84B4;
+  --cat-8: #A8CC5E;
+
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
 
 body {
   background: var(--fundo);
   color: var(--texto);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
 }
+
+/* Numeros em tabelas e metricas nao devem "dancar" quando mudam de valor. */
+.tabular { font-variant-numeric: tabular-nums; }
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -139,4 +285,829 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Para Firefox */
 input[type="date"]::-moz-calendar-picker-indicator {
   filter: invert(1);
+}
+
+/* ── FEEDBACK DE CARREGAMENTO / SIMULAÇÃO ─────────────────────────────────── */
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* Barra indeterminada: usada quando sabemos que algo está rodando
+   mas não dá para medir o quanto falta (execução do Python). */
+.barra-indeterminada {
+  position: relative;
+  overflow: hidden;
+}
+
+.barra-indeterminada::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--info);
+  border-radius: inherit;
+  animation: deslizar 1.1s ease-in-out infinite;
+}
+
+@keyframes deslizar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girando,
+  .barra-indeterminada::after {
+    animation: none;
+  }
+  .lateral,
+  .lateral--aberta {
+    transition: none;
+  }
+}
+
+
+/* ══ LAYOUT ═══════════════════════════════════════════════════════════════════
+   Desktop: lateral fixa + área de resultados.
+   Celular: coluna única; a lateral vira uma gaveta que sobe por cima.        */
+
+.app { min-height: 100vh; }
+
+.corpo { display: flex; align-items: flex-start; }
+
+.lateral {
+  width: var(--lateral);
+  flex-shrink: 0;
+  background: var(--fundo-card);
+  border-right: 1px solid var(--borda);
+  padding: 20px;
+  height: calc(100vh - var(--altura-cabecalho));
+  overflow-y: auto;
+  position: sticky;
+  top: var(--altura-cabecalho);
+}
+
+.resultados {
+  flex: 1;
+  min-width: 0;            /* deixa os gráficos encolherem dentro do flex */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .corpo { display: block; }
+
+  /* A lateral vira gaveta: fora da tela até receber .lateral--aberta.
+     O visibility é o que de fato a tira do caminho — só translateY deixaria
+     os campos ainda focáveis pelo teclado, escondidos acima da dobra. Ele
+     troca na hora, sem transição: a gaveta desliza ao abrir e some direto ao
+     fechar. Vale a pena — uma garantia de acessibilidade não pode depender de
+     uma animação chegar ao fim. */
+  .lateral {
+    position: fixed;
+    inset: var(--altura-cabecalho) 0 0 0;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    z-index: 90;
+    transform: translateY(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease;
+    padding-bottom: 90px;
+  }
+  .lateral--aberta {
+    transform: translateY(0);
+    visibility: visible;
+  }
+
+  .resultados { padding: 14px; gap: 14px; }
+}
+
+/* ══ CARTÕES E SEÇÕES ════════════════════════════════════════════════════════ */
+
+.cartao {
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 16px;
+}
+
+.secao + .secao { margin-top: 22px; }
+
+.secao__titulo {
+  color: var(--texto-suave);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dica { color: var(--texto-suave); font-size: 11px; line-height: 1.5; margin: 6px 0 0; }
+
+/* ══ CONTROLES ═══════════════════════════════════════════════════════════════ */
+
+.campo {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  color: var(--texto);
+  font-size: 14px;
+  font-family: inherit;
+}
+.campo:focus { outline: 2px solid var(--info); outline-offset: -1px; }
+
+.rotulo {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.linha-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Abas de modo (Patrimônio / Rentabilidade) */
+.abas {
+  display: flex;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  padding: 3px;
+  gap: 3px;
+}
+.aba {
+  flex: 1;
+  padding: 8px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.aba:hover { color: var(--texto); }
+.aba--ativa { background: var(--fundo-elevado); color: var(--primaria); }
+
+.botao-primario {
+  width: 100%;
+  padding: 12px;
+  background: var(--primaria);
+  color: #04140A;
+  border: none;
+  border-radius: var(--raio-p);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: filter 0.15s;
+}
+.botao-primario:hover:not(:disabled) { filter: brightness(1.1); }
+.botao-primario:disabled { background: var(--borda); color: var(--texto-suave); cursor: not-allowed; }
+
+.botao-icone {
+  background: none;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--texto);
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 1;
+}
+.botao-icone:hover { background: var(--fundo-elevado); }
+
+/* ══ SELETOR DE ATIVOS ═══════════════════════════════════════════════════════
+   Cada ativo escolhido vira uma LINHA, não um chip solto. É o gancho para as
+   próximas features: orçamento de risco por ativo e quantidade em carteira.  */
+
+.ativo-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--fundo);
+  border: 1px solid var(--borda-suave);
+  border-radius: var(--raio-p);
+}
+.ativo-linha + .ativo-linha { margin-top: 6px; }
+.ativo-linha__nome { font-size: 13px; font-weight: 600; flex: 1; }
+.ativo-linha__aviso { font-size: 15px; line-height: 1; cursor: help; }
+.ativo-linha__remover {
+  background: none;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 4px;
+  font-family: inherit;
+}
+.ativo-linha__remover:hover { color: var(--negativo); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.chip {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid var(--borda);
+  background: var(--fundo);
+  color: var(--texto-suave);
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s;
+}
+.chip:hover { background: var(--fundo-elevado); color: var(--texto); }
+.chip--ativo { background: var(--info); border-color: var(--info); color: #04121F; font-weight: 700; }
+.chip--morto { border-style: dashed; opacity: 0.65; }
+
+.sugestoes {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--fundo-elevado);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.sugestao {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border: none;
+  background: none;
+  color: var(--texto);
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.sugestao:hover { background: var(--info); color: #04121F; }
+
+/* ══ ESTRATÉGIAS ═════════════════════════════════════════════════════════════ */
+
+.estrategia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--raio-p);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.estrategia:hover { background: var(--fundo); }
+.estrategia--marcada { background: var(--fundo); border-color: var(--borda); }
+.estrategia__cor { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.estrategia__nome { font-size: 13px; flex: 1; }
+
+/* ══ AVISOS ══════════════════════════════════════════════════════════════════ */
+
+.aviso {
+  display: flex;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--raio-p);
+  font-size: 12px;
+  line-height: 1.55;
+  border: 1px solid;
+}
+.aviso--atencao { background: rgba(227,179,65,0.08); border-color: rgba(227,179,65,0.35); }
+.aviso--info    { background: rgba(88,166,255,0.07); border-color: rgba(88,166,255,0.30); }
+.aviso--erro    { background: rgba(248,81,73,0.08);  border-color: rgba(248,81,73,0.35); }
+.aviso__icone { flex-shrink: 0; }
+.aviso strong { color: var(--texto); }
+
+/* ══ ESTADO VAZIO ════════════════════════════════════════════════════════════ */
+
+.vazio {
+  border: 1px dashed var(--borda);
+  border-radius: var(--raio);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--texto-suave);
+}
+.vazio__titulo { color: var(--texto); font-size: 16px; font-weight: 700; margin: 0 0 8px; }
+.vazio__passos {
+  list-style: none;
+  padding: 0;
+  margin: 20px auto 0;
+  max-width: 340px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.vazio__passos li { display: flex; gap: 10px; }
+.vazio__passos b { color: var(--primaria); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+/* ══ CARTÕES DE MÉTRICA ══════════════════════════════════════════════════════ */
+
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.metrica {
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-top: 3px solid var(--texto-suave);
+  border-radius: var(--raio);
+  padding: 12px 14px;
+}
+.metrica__rotulo {
+  color: var(--texto-suave);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+.metrica__valor { font-size: 20px; font-weight: 700; margin: 0; }
+.metrica__extra { color: var(--texto-suave); font-size: 12px; margin: 4px 0 0; }
+
+/* ══ CABEÇALHO ═══════════════════════════════════════════════════════════════ */
+
+.cabecalho {
+  background: var(--fundo-card);
+  border-bottom: 1px solid var(--borda);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--altura-cabecalho);
+}
+.cabecalho__marca { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.cabecalho__titulo { color: var(--primaria); font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; }
+.cabecalho__sub { color: var(--texto-suave); font-size: 11px; margin: 0; }
+.cabecalho__acoes { display: flex; align-items: center; gap: 8px; }
+
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--borda);
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+.selo__ponto { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+.so-desktop { display: initial; }
+.so-celular { display: none; }
+
+@media (max-width: 900px) {
+  .so-desktop { display: none; }
+  .so-celular { display: initial; }
+  .cabecalho__sub { display: none; }
+}
+
+/* ══ GRÁFICOS ════════════════════════════════════════════════════════════════ */
+
+.grafico { width: 100%; height: 420px; }
+.grafico--baixo { height: 280px; }
+
+@media (max-width: 900px) {
+  .grafico { height: 300px; }
+  .grafico--baixo { height: 230px; }
+}
+
+/* Conteúdo largo rola sozinho, sem empurrar a página inteira. */
+.rolagem-x { overflow-x: auto; }
+
+
+/* ══ BOTÃO DE AJUDA (?) ═══════════════════════════════════════════════════════
+   Guarda a regra de funcionamento fora da tela principal. A interface mostra
+   o que fazer; isto explica o porquê, só para quem procurar.                 */
+
+.ajuda {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.ajuda__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: help;
+  transition: color 0.12s, background 0.12s;
+}
+.ajuda__botao:hover,
+.ajuda__botao--ativo {
+  color: var(--primaria);
+  background: var(--fundo-elevado);
+}
+.ajuda__botao:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 1px;
+}
+
+.ajuda__balao {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -8px;
+  z-index: 60;
+  width: max-content;
+  max-width: 250px;
+  padding: 10px 12px;
+  background: var(--fundo-elevado);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  box-shadow: var(--sombra);
+  color: var(--texto);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+}
+.ajuda__balao--direita { left: auto; right: -8px; }
+
+/* ══ AJUSTES DO REBRAND ══════════════════════════════════════════════════════ */
+
+/* Ícones dentro de botões e rótulos alinham pelo centro da linha. */
+.com-icone {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Campo de busca com a lupa dentro, em vez de placeholder longo. */
+.campo-busca { position: relative; }
+.campo-busca__icone {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+.campo-busca .campo { padding-left: 34px; }
+
+/* O spinner agora é SVG: gira o elemento inteiro. */
+/* Spinner do status do Python e do botão Simular. Só gira de verdade porque
+   o Pyodide roda num Web Worker — na thread principal a animação congelaria
+   junto com o resto da página. */
+.girando { display: inline-flex; animation: girar 1.1s linear infinite; }
+
+/* Estado vazio da lista de ativos: um ícone e uma linha, não um parágrafo. */
+.sem-itens {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 12px;
+  border: 1px dashed var(--borda);
+  border-radius: var(--raio-p);
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Cabeçalho de seção: título à esquerda, contador e ajuda à direita. */
+.secao__titulo { gap: 6px; }
+.secao__acoes { display: inline-flex; align-items: center; gap: 4px; }
+
+/* Abas com ícone. */
+.aba { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* Linha de ativo: o aviso vira ícone clicável com a explicação dentro. */
+.ativo-linha__remover {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+}
+.ativo-linha__remover:hover { background: var(--negativo-fundo); }
+
+/* Avisos passam a usar as variáveis semânticas novas. */
+.aviso--atencao { background: var(--atencao-fundo); border-color: var(--atencao); color: var(--texto); }
+.aviso--info    { background: var(--info-fundo);    border-color: var(--info);    color: var(--texto); }
+.aviso--erro    { background: var(--negativo-fundo); border-color: var(--negativo); color: var(--texto); }
+.aviso__icone { color: currentColor; margin-top: 1px; }
+.aviso--atencao .aviso__icone { color: var(--atencao); }
+.aviso--info .aviso__icone    { color: var(--info); }
+.aviso--erro .aviso__icone    { color: var(--negativo); }
+
+/* Cartões ganham a sombra do tema — no claro é o que os separa do fundo. */
+.cartao, .metrica { box-shadow: var(--sombra); }
+
+/* Sombra da gaveta de sugestões vem do token, para funcionar nos dois temas. */
+.sugestoes { box-shadow: var(--sombra); }
+
+
+/* ══ PAINEL DE CARREGAMENTO DO PYTHON ════════════════════════════════════════ */
+
+.painel-python {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  width: 300px;
+  max-width: calc(100vw - 36px);
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 15px;
+  z-index: 200;
+  box-shadow: var(--sombra);
+}
+.painel-python--erro { border-color: var(--negativo); }
+
+@media (max-width: 900px) {
+  .painel-python { left: 12px; right: 12px; bottom: 12px; width: auto; }
+}
+
+/* Barra de progresso determinada. */
+.barra {
+  height: 5px;
+  background: var(--fundo-elevado);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.barra__preenchida {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ══ ESTADO VAZIO DOS RESULTADOS ═════════════════════════════════════════════ */
+
+.vazio__icone {
+  display: inline-flex;
+  padding: 14px;
+  border-radius: 50%;
+  background: var(--fundo-elevado);
+  color: var(--primaria);
+  margin-bottom: 18px;
+}
+
+.vazio__passos li {
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+}
+.vazio__passos b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--fundo-elevado);
+  color: var(--primaria);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ══ AFINAÇÕES DO REBRAND ════════════════════════════════════════════════════ */
+
+/* No tema claro a lateral precisa de contraste com o fundo da página. */
+.lateral { background: var(--fundo-card); }
+
+/* Checkbox nativo herda a cor da marca nos dois temas. */
+input[type="checkbox"] { accent-color: var(--primaria); }
+
+/* O foco tem que ser visível — teclado é caminho de primeira classe. */
+.campo:focus-visible,
+.chip:focus-visible,
+.aba:focus-visible,
+.estrategia:focus-within,
+.botao-icone:focus-visible,
+.botao-primario:focus-visible,
+.sugestao:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 1px;
+}
+
+/* Os inputs de data trazem um ícone de calendário do próprio navegador;
+   no tema escuro ele nasce preto sobre fundo escuro. */
+:root[data-tema="escuro"] input[type="date"]::-webkit-calendar-picker-indicator,
+:root[data-tema="escuro"] input[type="number"] { color-scheme: dark; }
+
+.dica { display: flex; align-items: center; gap: 6px; }
+
+
+/* ══ DENSIDADE ═══════════════════════════════════════════════════════════════
+   A lateral é o painel de trabalho: cada linha precisa caber mais informação
+   por pixel. Antes um ativo escolhido ocupava ~42px só para dizer o código. */
+
+.ativo-linha {
+  padding: 5px 6px 5px 10px;
+  gap: 6px;
+  border-radius: 6px;
+}
+.ativo-linha + .ativo-linha { margin-top: 3px; }
+.ativo-linha__nome { font-size: 12.5px; letter-spacing: 0.01em; }
+
+/* Muitos ativos não podem empurrar o botão Simular para fora da tela. */
+.lista-ativos {
+  max-height: 232px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.secao + .secao { margin-top: 18px; }
+.secao__titulo { margin-bottom: 8px; }
+
+/* Estratégias: linhas mais justas, sem perder a área de clique confortável. */
+.estrategia { padding: 7px 9px; gap: 9px; }
+.estrategia + .estrategia { margin-top: 2px; }
+
+/* ══ CARTÃO DE VALOR EDITÁVEL ════════════════════════════════════════════════ */
+
+.metrica--editavel { border-top-color: var(--borda); }
+
+.metrica__entrada {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.metrica__entrada > span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+.metrica__entrada input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--borda);
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  padding: 0 0 1px;
+  outline: none;
+}
+.metrica__entrada input:hover { border-bottom-color: var(--texto-suave); }
+.metrica__entrada input:focus {
+  border-bottom-style: solid;
+  border-bottom-color: var(--primaria);
+}
+
+/* ══ GRÁFICOS ════════════════════════════════════════════════════════════════ */
+
+/* A legenda do recharts vem colada no eixo. */
+.recharts-legend-wrapper { padding-top: 4px; }
+
+/* Rótulo dentro da pizza precisa de contraste com a fatia, não com o cartão. */
+.recharts-pie-label-text {
+  fill: var(--texto);
+  font-weight: 600;
+}
+
+
+/* ══ PAINEL DE DIAGNÓSTICO (Ctrl+Shift+D) ════════════════════════════════════ */
+
+.diagnostico {
+  position: fixed;
+  top: var(--altura-cabecalho);
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  background: var(--fundo-card);
+  border-left: 1px solid var(--borda);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--sombra);
+}
+
+.diagnostico__topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--borda);
+}
+.diagnostico__titulo {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+}
+
+.diagnostico__lista {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.diagnostico__item + .diagnostico__item {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda-suave);
+}
+
+.diagnostico__linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.diagnostico__ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.diagnostico__rotulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.diagnostico__ms { color: var(--texto-suave); }
+
+.diagnostico__barra {
+  height: 3px;
+  background: var(--fundo-elevado);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 5px 0 0 15px;
+}
+.diagnostico__barra > div { height: 100%; border-radius: 2px; }
+
+.diagnostico__detalhe {
+  margin: 4px 0 0 15px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--texto-suave);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+
+/* ══ ORÇAMENTO DE RISCO ══════════════════════════════════════════════════════
+   Campo por ativo dizendo qual fatia do risco da carteira ele deve carregar.
+   São pesos relativos, não porcentagens — 2 contra 1 é o dobro de risco — e a
+   porcentagem ao lado mostra no que aquilo se traduz depois de normalizar. */
+
+.orcamento {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orcamento__campo {
+  width: 46px;
+  padding: 3px 6px;
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  color: var(--texto);
+  font-size: 12px;
+  font-family: inherit;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+.orcamento__campo::-webkit-outer-spin-button,
+.orcamento__campo::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.orcamento__campo:focus { outline: 2px solid var(--primaria); outline-offset: -1px; }
+
+.orcamento__pct {
+  font-size: 11px;
+  color: var(--texto-suave);
+  min-width: 42px;
+  text-align: right;
 }

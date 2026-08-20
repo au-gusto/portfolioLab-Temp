@@ -1,20 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
+
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
-interface Ponto {
-  data: string;
-  valor: number;
-}
+import { ESTRATEGIAS } from "../lib/estrategias-meta";
+import { reduzirPontos, PONTOS_NO_GRAFICO } from "../lib/amostragem";
+
+interface Ponto { data: string; valor: number }
 
 interface ConfigSimulacao {
   aporteInicial: number;
@@ -24,154 +19,166 @@ interface ConfigSimulacao {
 }
 
 interface Props {
-  dados: {
-    cdi: Ponto[] | null;
-    paridade: Ponto[] | null;
-    eficiente: Ponto[] | null;
-    ingenua?: Ponto[] | null;
-  };
+  dados: Partial<Record<string, Ponto[] | null>>;
   config: ConfigSimulacao | null;
+  /** Quais séries o modo atual permite, na ordem do catálogo. */
+  series: string[];
 }
 
-function calcularMeses(dataInicio: string, dataFim: string): number {
-  const inicio = new Date(dataInicio);
-  const fim = new Date(dataFim);
-  return (fim.getFullYear() - inicio.getFullYear()) * 12 + (fim.getMonth() - inicio.getMonth());
+function reais(v: number, casas = 2): string {
+  return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 }
 
-function calcularValorInvestido(config: ConfigSimulacao): number {
-  const meses = calcularMeses(config.dataInicio, config.dataFim);
-  return config.aporteInicial + config.aportesMensal * Math.max(0, meses - 1);
+/** Eixo Y: R$ 12.345 vira "12,3 mil" para não estourar a largura no celular. */
+function reaisCurto(v: number): string {
+  if (Math.abs(v) >= 1000) {
+    return (v / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mil";
+  }
+  return v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
-function calcularRetorno(serie: Ponto[], valorInvestido: number): number {
-  const valorFinal = serie[serie.length - 1].valor;
-  return ((valorFinal - valorInvestido) / valorInvestido) * 100;
+function porcentagem(v: number): string {
+  const n = v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (v >= 0 ? "+" : "") + n + "%";
 }
 
-const ESTRATEGIAS_CONFIG = [
-  { id: "cdi",      label: "CDI",               cor: "var(--azul-claro)" },
-  { id: "paridade", label: "Paridade de Risco",  cor: "var(--verde)"  },
-  { id: "eficiente",label: "Carteira Eficiente", cor: "var(--azul)"   },
-];
+function mesAno(iso: string): string {
+  const [ano, mes] = iso.split("-");
+  const nomes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  return `${nomes[Number(mes) - 1]}/${ano.slice(-2)}`;
+}
 
-export default function Grafico({ dados, config }: Props) {
-  
-  // ---- CARDS ----
-  const valorInvestido = config ? calcularValorInvestido(config) : null;
+/**
+ * Quanto foi efetivamente aportado. Conta os meses de rebalanceamento, que é
+ * o que a simulação percorre — o primeiro aporte acontece no primeiro dia 1º
+ * a partir da data de início, não na própria data escolhida.
+ */
+function totalInvestido(config: ConfigSimulacao): number {
+  const inicio = new Date(config.dataInicio + "T00:00:00");
+  const fim = new Date(config.dataFim + "T00:00:00");
+  const primeiro = new Date(inicio.getFullYear(), inicio.getMonth() + (inicio.getDate() > 1 ? 1 : 0), 1);
+  const meses =
+    (fim.getFullYear() - primeiro.getFullYear()) * 12 + (fim.getMonth() - primeiro.getMonth()) + 1;
+  const n = Math.max(0, meses);
+  return n === 0 ? 0 : config.aporteInicial + config.aportesMensal * (n - 1);
+}
 
-  // ---- CHART DATA ----
-  const combined: Record<string, any> = {};
+export default function Grafico({ dados, config, series }: Props) {
+  const investido = config ? totalInvestido(config) : null;
 
-  ESTRATEGIAS_CONFIG.forEach(({ id }) => {
-    const serie = dados[id as keyof typeof dados];
-    if (serie) {
-      serie.forEach((item) => {
-        if (!combined[item.data]) combined[item.data] = { data: item.data };
-        combined[item.data][id] = item.valor;
-      });
-    }
-  });
+  const combinado: Record<string, Record<string, number | string>> = {};
+  const doModo = ESTRATEGIAS.filter((e) => series.includes(e.id));
 
-  const chartData = Object.values(combined).sort((a, b) =>
-    a.data.localeCompare(b.data)
-  );
-
-  // ffill
-  const lastValues: Record<string, number | null> = { cdi: null, paridade: null, eficiente: null };
-  chartData.forEach((item: any) => {
-    ESTRATEGIAS_CONFIG.forEach(({ id }) => {
-      if (item[id] !== undefined) lastValues[id] = item[id];
-      else item[id] = lastValues[id];
+  doModo.forEach(({ id }) => {
+    const serie = dados[id];
+    serie?.forEach((item) => {
+      if (!combinado[item.data]) combinado[item.data] = { data: item.data };
+      combinado[item.data][id] = item.valor;
     });
   });
 
+  const chartDataCompleto = Object.values(combinado).sort((a, b) =>
+    String(a.data).localeCompare(String(b.data))
+  );
+
+  const ultimos: Record<string, number | null> = Object.fromEntries(series.map((s) => [s, null]));
+  chartDataCompleto.forEach((item) => {
+    const doModo = ESTRATEGIAS.filter((e) => series.includes(e.id));
+
+  doModo.forEach(({ id }) => {
+      if (item[id] !== undefined) ultimos[id] = item[id] as number;
+      else if (ultimos[id] !== null) item[id] = ultimos[id] as number;
+    });
+  });
+
+  // Reduz os pontos só para desenhar. Os cartões acima continuam lendo a série
+  // completa, então nenhum número muda — só o custo de pintar o SVG.
+  const chartData = useMemo(
+    () => reduzirPontos(chartDataCompleto, PONTOS_NO_GRAFICO, (p) => Number(p["paridade"] ?? 0)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chartDataCompleto.length, chartDataCompleto[0]?.data, chartDataCompleto[chartDataCompleto.length - 1]?.data]
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
+      {config && investido !== null && (
+        <div className="metricas">
+          <div className="metrica">
+            <p className="metrica__rotulo">Total investido</p>
+            <p className="metrica__valor tabular">{reais(investido, 0)}</p>
+                      </div>
 
-      {/* CARDS */}
-      {config && (
-        <div style={{ display: "flex", gap: "12px" }}>
-
-          {/* Card Valor Investido */}
-          <div style={{
-            flex: 1,
-            background: "var(--fundo-card)",
-            border: "1px solid var(--borda)",
-            borderTop: "3px solid var(--texto-suave)",
-            borderRadius: "8px",
-            padding: "12px 16px",
-          }}>
-            <p style={{ color: "var(--texto-suave)", fontSize: "11px", marginBottom: "6px", textTransform: "uppercase" }}>
-              Valor Investido
-            </p>
-            <p style={{ color: "var(--texto)", fontSize: "20px", fontWeight: 700 }}>
-              R$ {valorInvestido!.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-
-          {/* Cards das estratégias marcadas */}
-          {ESTRATEGIAS_CONFIG.map(({ id, label, cor }) => {
-            const serie = dados[id as keyof typeof dados];
-            if (!serie || serie.length === 0) return null;
-            const ultimo = serie[serie.length - 1];
-            if (!ultimo || typeof ultimo.valor !== "number" || Number.isNaN(ultimo.valor)) return null;
-            const valorFinal = ultimo.valor;
-            const retorno = calcularRetorno(serie, valorInvestido!);
+          {doModo.map(({ id, titulo, cor }) => {
+            const serie = dados[id];
+            if (!serie?.length) return null;
+            const final = serie[serie.length - 1].valor;
+            if (typeof final !== "number" || Number.isNaN(final)) return null;
+            const retorno = investido > 0 ? ((final - investido) / investido) * 100 : 0;
             const positivo = retorno >= 0;
             return (
-              <div key={id} style={{
-                flex: 1,
-                background: "var(--fundo-card)",
-                border: "1px solid var(--borda)",
-                borderTop: `3px solid ${cor}`,
-                borderRadius: "8px",
-                padding: "12px 16px",
-              }}>
-                <p style={{ color: "var(--texto-suave)", fontSize: "11px", marginBottom: "6px", textTransform: "uppercase" }}>
-                  {label}
-                </p>
-                <p style={{ color: positivo ? "var(--verde)" : "var(--vermelho)", fontSize: "20px", fontWeight: 700 }}>
-                  {positivo ? "+" : ""}{retorno.toFixed(1)}%
-                </p>
-                <p style={{ color: "var(--texto-suave)", fontSize: "12px", marginTop: "4px" }}>
-                  R$ {valorFinal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <div key={id} className="metrica" style={{ borderTopColor: cor }}>
+                <p className="metrica__rotulo">{titulo}</p>
+                <p className="metrica__valor tabular">{reais(final)}</p>
+                <p
+                  className="metrica__extra tabular"
+                  style={{ color: positivo ? "var(--positivo)" : "var(--negativo)" }}
+                >
+                  {porcentagem(retorno)} sobre o investido
                 </p>
               </div>
             );
           })}
-
         </div>
       )}
 
-      {/* GRÁFICO */}
-      <div style={{ width: "100%", height: 400 }}>
-        <ResponsiveContainer>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" />
-            <XAxis
-              dataKey="data"
-              stroke="var(--texto-suave)"
-              tickFormatter={(value) => {
-                // value no formato "YYYY-MM-DD"
-                const [ano, mes] = value.split('-');     // ignoramos o dia
-                const data = new Date(ano, mes - 1, 1);  // cria data com o mês correto
-                // Exibe "mmm/aa" (inglês) – ex: "May/22"
-                return data.toLocaleString('en', { month: 'short' }) + '/' + ano.slice(-2);
-              }}
-            />
-            <YAxis stroke="var(--texto-suave)" />
-            <Tooltip
-              contentStyle={{ background: "var(--fundo-card)", borderColor: "var(--borda)" }}
-            />
-            <Legend />
-            {dados.cdi      && <Line type="monotone" dataKey="cdi"       stroke="var(--azul-claro)"   name="CDI"               dot={false} />}
-            {dados.paridade && <Line type="monotone" dataKey="paridade"  stroke="var(--verde)"   name="Paridade de Risco" dot={false} />}
-            {dados.eficiente && <Line type="monotone" dataKey="eficiente" stroke="var(--azul)"    name="Carteira Eficiente" dot={false} />}
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="cartao">
+        <p className="secao__titulo">Evolução do patrimônio</p>
+        <div className="grafico">
+          <ResponsiveContainer>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" />
+              <XAxis
+                dataKey="data"
+                stroke="var(--texto-suave)"
+                tick={{ fontSize: 11 }}
+                minTickGap={64}
+                tickFormatter={(v) => mesAno(String(v))}
+              />
+              <YAxis
+                stroke="var(--texto-suave)"
+                tick={{ fontSize: 11 }}
+                width={70}
+                tickFormatter={(v) => reaisCurto(Number(v))}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--fundo-elevado)",
+                  borderColor: "var(--borda)",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                }}
+                labelFormatter={(v) => {
+                  const [a, m, d] = String(v).split("-");
+                  return `${d}/${m}/${a}`;
+                }}
+                formatter={(v, nome) => [reais(Number(v)), String(nome)]}
+              />
+              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              {doModo.map(({ id, titulo, cor, tracejado }) =>
+                dados[id] ? (
+                  <Line
+                    key={id} type="monotone" dataKey={id} stroke={cor}
+                    name={titulo} dot={false} strokeWidth={2}
+                    strokeDasharray={tracejado ? "5 4" : undefined}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                ) : null
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
-
     </div>
   );
 }
