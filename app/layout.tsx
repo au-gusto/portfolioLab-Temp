@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Portfolio Lab · B3",
   description: "Comparação entre estratégias de Portfólios no mercado brasileiro",
 };
+
+/**
+ * A fonte é servida pelo próprio domínio (o next/font baixa no build), então
+ * não há requisição ao Google em tempo de execução nem o texto piscando com a
+ * fonte do sistema antes de trocar.
+ */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--fonte-marca",
+});
 
 /**
  * Aplica o tema salvo antes da primeira pintura. Sem isso a página nasce com o
@@ -19,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className={jakarta.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: TEMA_INICIAL }} />
         {/* O Pyodide não é carregado aqui — quem o baixa é o worker

@@ -44,7 +44,7 @@ function SeloDados({ status }: { status: StatusDados }) {
 
   return (
     <span className="selo">
-      <span className="selo__ponto" style={{ background: cor }} />
+      <span className="selo__ponto" style={{ "--cor-selo": cor } as React.CSSProperties} />
       <span className="tabular">{formatarBR(status.ultimoPregao)}</span>
       <Ajuda alinhar="direita">
         Data do último pregão nos dados
@@ -65,8 +65,13 @@ export default function Cabecalho({
   return (
     <header className="cabecalho">
       <div className="cabecalho__marca">
-        <h1 className="cabecalho__titulo">Portfolio Lab</h1>
-        <p className="cabecalho__sub">B3</p>
+        <span className="cabecalho__logo" aria-hidden="true">
+          <Icone nome="grafico" tamanho={16} />
+        </span>
+        <div>
+          <h1 className="cabecalho__titulo">Portfolio Lab</h1>
+          <p className="cabecalho__sub">B3</p>
+        </div>
       </div>
 
       <div className="cabecalho__acoes">
@@ -84,7 +89,7 @@ export default function Cabecalho({
         </button>
 
         <button
-          className="botao-icone"
+          className="botao-icone botao-icone--codigo"
           onClick={() => setPainelAberto(!painelAberto)}
           aria-expanded={painelAberto}
           aria-label="Editar o código Python das estratégias"

@@ -1,155 +1,204 @@
 @import "tailwindcss";
 
+/* ══ PALETA CLARA ════════════════════════════════════════════════════════════
+   Índigo sobre um branco levemente esverdiado. O fundo não é cinza neutro de
+   propósito: um traço de verde esquenta a tela e faz o índigo parecer mais
+   frio do que ele é sozinho, que é o contraste que separa ação de superfície. */
+
 :root {
   color-scheme: light;
 
-  /* Neutros levemente frios, para não brigar com o teal da marca. */
-  --fundo: #F4F6F8;
+  --fundo: #EDF3EF;
   --fundo-card: #FFFFFF;
-  --fundo-elevado: #EBEEF2;
-  --borda: #D7DCE3;
-  --borda-suave: #E6E9EE;
-  --texto: #171A1F;
-  --texto-suave: #5A616D;
+  --fundo-elevado: #E3EDE7;
+  --borda: #D1DFD7;
+  --borda-suave: #E2EBE5;
+  --texto: #131A24;
+  --texto-suave: #55636F;
 
-  /* Marca. Teal em vez do verde-neon: mesma leitura de "ação", menos ruído. */
-  --primaria: #0A6E63;
-  --primaria-forte: #075349;
+  --primaria: #4F46E5;
+  --primaria-forte: #4338CA;
   --sobre-primaria: #FFFFFF;
+  --secundaria: #0D9488;
+  --secundaria-forte: #0F766E;
 
-  /* Semânticas — separadas das cores de série de propósito. */
-  --positivo: #0A6E63;
+  /* Degradês da marca. Um só para o título e o bloco do logo, outro, mais
+     curto, para superfícies que precisam de brilho sem virar arco-íris. */
+  --grad-marca: linear-gradient(115deg, #4F46E5 0%, #0EA5E9 48%, #0D9488 100%);
+  --grad-acao: linear-gradient(135deg, #4F46E5 0%, #6366F1 55%, #0EA5E9 100%);
+  --grad-fio: linear-gradient(90deg, transparent, #4F46E5 18%, #0EA5E9 50%, #0D9488 82%, transparent);
+
+  /* Vidro fosco do cabeçalho e halos coloridos. */
+  --vidro: rgba(255, 255, 255, 0.72);
+  --halo: rgba(79, 70, 229, 0.18);
+  --halo-forte: rgba(79, 70, 229, 0.30);
+  --brilho: 0 6px 18px rgba(79, 70, 229, 0.26);
+  --brilho-forte: 0 8px 26px rgba(79, 70, 229, 0.38);
+
+  --positivo: #0D9488;
   --negativo: #C2453B;
   --atencao: #8A5B09;
   --info: #2C6FB5;
 
-  /* Fundos translúcidos dos avisos. */
   --atencao-fundo: rgba(176, 116, 12, 0.10);
   --info-fundo: rgba(44, 111, 181, 0.09);
   --negativo-fundo: rgba(194, 69, 59, 0.09);
 
-  /* Séries dos gráficos. O CDI é de propósito o mais apagado: é referência,
-     não competidor. Os outros três se separam por matiz e por luminosidade,
-     então continuam distinguíveis em preto e branco. */
-  --serie-paridade: #0D8B7D;
-  --serie-cdi: #6B7684;
-  --serie-eficiente: #2C6FB5;
+  /* Séries dos gráficos, espaçadas em matiz E em luminosidade para
+     continuarem distinguíveis em preto e branco. O CDI é o mais apagado de
+     propósito: é referência, não competidor. */
+  --serie-paridade: #4F46E5;
+  --serie-cdi: #64748B;
+  --serie-eficiente: #0D9488;
   --serie-ingenua: #C2810B;
-  --serie-ibov: #6D4AA8;
-  --serie-ipca: #A8443C;
-  --serie-poupanca: #7A8A5C;
+  --serie-ibov: #9333EA;
+  --serie-ipca: #C2453B;
+  --serie-poupanca: #4D7C0F;
 
-  /* Paleta categórica dos gráficos de alocação — um ativo por cor.
-     Matizes bem espaçados e luminosidade parecida, para nenhum ativo
-     parecer mais importante que outro só por ser mais claro. */
-  --cat-1: #0A6E63;
-  --cat-2: #2C6FB5;
+  /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
+     para nenhum parecer mais importante só por ser mais claro. */
+  --cat-1: #4F46E5;
+  --cat-2: #0D9488;
   --cat-3: #B0740C;
-  --cat-4: #A8443C;
-  --cat-5: #6D4AA8;
-  --cat-6: #0F7C8C;
+  --cat-4: #C2453B;
+  --cat-5: #9333EA;
+  --cat-6: #0EA5E9;
   --cat-7: #A83C6E;
-  --cat-8: #5C7A25;
+  --cat-8: #4D7C0F;
 
   /* Medidas repetidas o bastante para merecerem nome */
   --lateral: 340px;
   --altura-cabecalho: 57px;
-  --raio: 10px;
-  --raio-p: 7px;
+  --raio-g: 18px;
+  --raio: 13px;
+  --raio-p: 9px;
 
-  --sombra: 0 1px 2px rgba(16, 19, 24, 0.05), 0 8px 24px rgba(16, 19, 24, 0.07);
+  --sombra: 0 1px 2px rgba(20, 40, 32, 0.05), 0 10px 30px rgba(24, 52, 44, 0.08);
+  --sombra-cor: 0 1px 2px rgba(79, 70, 229, 0.08), 0 12px 32px rgba(79, 70, 229, 0.13);
 }
 
-/* Sem escolha explícita, segue o sistema. */
+/* ══ PALETA ESCURA ═══════════════════════════════════════════════════════════
+   Terminal de mercado: preto profundo, verde como segunda cor e acentos
+   luminosos (ciano, violeta, verde-limão). Os halos existem porque em fundo
+   quase preto uma borda de 1px some — o brilho é que dá volume. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) { color-scheme: dark; }
+}
+
+:root[data-tema="escuro"] { color-scheme: dark; }
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    color-scheme: dark;
+    --fundo: #05070A;
+    --fundo-card: #0B0F15;
+    --fundo-elevado: #141B23;
+    --borda: #212B36;
+    --borda-suave: #171F28;
+    --texto: #E6EDF3;
+    --texto-suave: #8B98A6;
 
-    --fundo: #101318;
-    --fundo-card: #171B22;
-    --fundo-elevado: #1F242D;
-    --borda: #2C333E;
-    --borda-suave: #232932;
-    --texto: #E7E9ED;
-    --texto-suave: #97A0AD;
+    --primaria: #22D3EE;
+    --primaria-forte: #67E8F9;
+    --sobre-primaria: #04121A;
+    --secundaria: #4ADE80;
+    --secundaria-forte: #86EFAC;
 
-    --primaria: #2DD4BF;
-    --primaria-forte: #5EEAD4;
-    --sobre-primaria: #07211E;
+    --grad-marca: linear-gradient(115deg, #22D3EE 0%, #A78BFA 52%, #A3E635 100%);
+    --grad-acao: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
+    --grad-fio: linear-gradient(90deg, transparent, #22D3EE 18%, #A78BFA 50%, #A3E635 82%, transparent);
 
-    --positivo: #34D399;
-    --negativo: #F1706A;
-    --atencao: #E0AE4E;
-    --info: #6BA6E8;
+    --vidro: rgba(11, 15, 21, 0.72);
+    --halo: rgba(34, 211, 238, 0.22);
+    --halo-forte: rgba(34, 211, 238, 0.38);
+    --brilho: 0 0 22px rgba(34, 211, 238, 0.28);
+    --brilho-forte: 0 0 32px rgba(34, 211, 238, 0.45);
 
-    --atencao-fundo: rgba(224, 174, 78, 0.12);
-    --info-fundo: rgba(107, 166, 232, 0.11);
-    --negativo-fundo: rgba(241, 112, 106, 0.11);
+    --positivo: #4ADE80;
+    --negativo: #FB7185;
+    --atencao: #FBBF24;
+    --info: #38BDF8;
 
-    --serie-paridade: #2DD4BF;
-    --serie-cdi: #8A94A3;
-    --serie-eficiente: #6BA6E8;
-    --serie-ingenua: #E0AE4E;
-    --serie-ibov: #B99BF0;
-    --serie-ipca: #F0796F;
-    --serie-poupanca: #A8CC5E;
+    --atencao-fundo: rgba(251, 191, 36, 0.12);
+    --info-fundo: rgba(56, 189, 248, 0.11);
+    --negativo-fundo: rgba(251, 113, 133, 0.11);
 
-    --cat-1: #2DD4BF;
-    --cat-2: #6BA6E8;
-    --cat-3: #E0AE4E;
-    --cat-4: #F0796F;
-    --cat-5: #B99BF0;
-    --cat-6: #4CC5D9;
-    --cat-7: #EE84B4;
-    --cat-8: #A8CC5E;
+    --serie-paridade: #22D3EE;
+    --serie-cdi: #7D8B99;
+    --serie-eficiente: #4ADE80;
+    --serie-ingenua: #FBBF24;
+    --serie-ibov: #A78BFA;
+    --serie-ipca: #FB7185;
+    --serie-poupanca: #A3E635;
 
-    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45);
+    --cat-1: #22D3EE;
+    --cat-2: #4ADE80;
+    --cat-3: #FBBF24;
+    --cat-4: #FB7185;
+    --cat-5: #A78BFA;
+    --cat-6: #38BDF8;
+    --cat-7: #F472B6;
+    --cat-8: #A3E635;
+
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(0, 0, 0, 0.55);
+    --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(34, 211, 238, 0.10);
   }
 }
 
 /* Escolha explícita do usuário vence o sistema, nos dois sentidos. */
 :root[data-tema="escuro"] {
-  color-scheme: dark;
+  --fundo: #05070A;
+  --fundo-card: #0B0F15;
+  --fundo-elevado: #141B23;
+  --borda: #212B36;
+  --borda-suave: #171F28;
+  --texto: #E6EDF3;
+  --texto-suave: #8B98A6;
 
-  --fundo: #101318;
-  --fundo-card: #171B22;
-  --fundo-elevado: #1F242D;
-  --borda: #2C333E;
-  --borda-suave: #232932;
-  --texto: #E7E9ED;
-  --texto-suave: #97A0AD;
+  --primaria: #22D3EE;
+  --primaria-forte: #67E8F9;
+  --sobre-primaria: #04121A;
+  --secundaria: #4ADE80;
+  --secundaria-forte: #86EFAC;
 
-  --primaria: #2DD4BF;
-  --primaria-forte: #5EEAD4;
-  --sobre-primaria: #07211E;
+  --grad-marca: linear-gradient(115deg, #22D3EE 0%, #A78BFA 52%, #A3E635 100%);
+  --grad-acao: linear-gradient(135deg, #22D3EE 0%, #34D399 58%, #A3E635 100%);
+  --grad-fio: linear-gradient(90deg, transparent, #22D3EE 18%, #A78BFA 50%, #A3E635 82%, transparent);
 
-  --positivo: #34D399;
-  --negativo: #F1706A;
-  --atencao: #E0AE4E;
-  --info: #6BA6E8;
+  --vidro: rgba(11, 15, 21, 0.72);
+  --halo: rgba(34, 211, 238, 0.22);
+  --halo-forte: rgba(34, 211, 238, 0.38);
+  --brilho: 0 0 22px rgba(34, 211, 238, 0.28);
+  --brilho-forte: 0 0 32px rgba(34, 211, 238, 0.45);
 
-  --atencao-fundo: rgba(224, 174, 78, 0.12);
-  --info-fundo: rgba(107, 166, 232, 0.11);
-  --negativo-fundo: rgba(241, 112, 106, 0.11);
+  --positivo: #4ADE80;
+  --negativo: #FB7185;
+  --atencao: #FBBF24;
+  --info: #38BDF8;
 
-  --serie-paridade: #2DD4BF;
-  --serie-cdi: #8A94A3;
-  --serie-eficiente: #6BA6E8;
-  --serie-ingenua: #E0AE4E;
-  --serie-ibov: #B99BF0;
-  --serie-ipca: #F0796F;
-  --serie-poupanca: #A8CC5E;
+  --atencao-fundo: rgba(251, 191, 36, 0.12);
+  --info-fundo: rgba(56, 189, 248, 0.11);
+  --negativo-fundo: rgba(251, 113, 133, 0.11);
 
-  --cat-1: #2DD4BF;
-  --cat-2: #6BA6E8;
-  --cat-3: #E0AE4E;
-  --cat-4: #F0796F;
-  --cat-5: #B99BF0;
-  --cat-6: #4CC5D9;
-  --cat-7: #EE84B4;
-  --cat-8: #A8CC5E;
+  --serie-paridade: #22D3EE;
+  --serie-cdi: #7D8B99;
+  --serie-eficiente: #4ADE80;
+  --serie-ingenua: #FBBF24;
+  --serie-ibov: #A78BFA;
+  --serie-ipca: #FB7185;
+  --serie-poupanca: #A3E635;
 
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45);
+  --cat-1: #22D3EE;
+  --cat-2: #4ADE80;
+  --cat-3: #FBBF24;
+  --cat-4: #FB7185;
+  --cat-5: #A78BFA;
+  --cat-6: #38BDF8;
+  --cat-7: #F472B6;
+  --cat-8: #A3E635;
+
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(0, 0, 0, 0.55);
+  --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 34px rgba(34, 211, 238, 0.10);
 }
 
 * { box-sizing: border-box; }
@@ -1404,4 +1453,303 @@ input[type="checkbox"] { accent-color: var(--primaria); }
 @media (max-width: 900px) {
   .gaveta-codigo { width: 100%; padding: 14px; }
   .editor__codigo { min-height: 260px; }
+}
+
+/* ══ REDESIGN: ELEMENTOS VISUAIS NO LUGAR DE TEXTO ═══════════════════════════
+   Tudo aqui vem depois de propósito: são as regras que reescrevem a aparência
+   das peças definidas acima, sem apagá-las. */
+
+body {
+  font-family: var(--fonte-marca), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+/* ── Cabeçalho: vidro fosco + fio de degradê ────────────────────────────────
+   O fio embaixo substitui a borda cinza de 1px. É a única linha da tela que
+   carrega as três cores da marca, então dá o tom sem repetir o logo. */
+
+.cabecalho {
+  position: sticky;
+  background: var(--vidro);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: none;
+  box-shadow: 0 1px 0 var(--borda-suave);
+}
+
+.cabecalho::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: var(--grad-fio);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Bloco do logo. Um quadrado com degradê e o ícone vazado dentro: dá à marca
+   um ponto de fixação visual que o texto sozinho não dava. */
+.cabecalho__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--grad-acao);
+  color: #FFFFFF;
+  flex-shrink: 0;
+  box-shadow: var(--brilho);
+}
+
+.cabecalho__marca { align-items: center; gap: 9px; }
+.cabecalho__marca > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+.cabecalho__titulo {
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  background: var(--grad-marca);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cabecalho__sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+/* ── Selo de dados: ponto com halo ──────────────────────────────────────────
+   O halo faz o ponto de 6px continuar legível no fundo quase preto do tema
+   escuro, onde um disco chapado dessa altura praticamente some. */
+
+.selo {
+  background: var(--fundo-card);
+  border-color: var(--borda-suave);
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.selo__ponto {
+  background: var(--cor-selo, var(--texto-suave));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cor-selo, var(--texto-suave)) 22%, transparent),
+              0 0 10px color-mix(in oklab, var(--cor-selo, var(--texto-suave)) 55%, transparent);
+}
+
+/* ── Botão principal: degradê e brilho ──────────────────────────────────────*/
+
+.botao-primario {
+  background: var(--grad-acao);
+  color: #FFFFFF;
+  border-radius: var(--raio-p);
+  letter-spacing: -0.01em;
+  box-shadow: var(--brilho);
+  transition: box-shadow 0.18s, transform 0.12s, filter 0.15s;
+}
+.botao-primario:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow: var(--brilho-forte);
+  transform: translateY(-1px);
+}
+.botao-primario:active:not(:disabled) { transform: translateY(0); }
+.botao-primario:disabled {
+  background: var(--fundo-elevado);
+  color: var(--texto-suave);
+  box-shadow: none;
+  transform: none;
+  filter: none;
+}
+
+/* ── Abas e chips ativos com degradê ────────────────────────────────────────*/
+
+.abas { border-radius: var(--raio-p); }
+
+.aba { border-radius: 6px; letter-spacing: -0.01em; }
+.aba--ativa {
+  background: var(--grad-acao);
+  color: #FFFFFF;
+  box-shadow: var(--brilho);
+}
+.aba--ativa:hover { color: #FFFFFF; }
+
+.chip { border-radius: 999px; }
+.chip--ativo {
+  background: var(--grad-acao);
+  border-color: transparent;
+  color: #FFFFFF;
+  box-shadow: var(--brilho);
+}
+.chip--ativo:hover { background: var(--grad-acao); color: #FFFFFF; }
+
+/* ── Botão de código: cor secundária ────────────────────────────────────────
+   Antes ele era um ícone cinza que só aparecia no hover — o caminho para ver o
+   Python da estratégia, que é metade do propósito do site, estava escondido
+   atrás de um gesto que ninguém sabia fazer. Agora tem cor própria e fica
+   sempre visível; duplicar e apagar continuam surgindo no hover, porque esses
+   sim são ações raras. */
+
+.acao-mini--codigo {
+  color: var(--secundaria);
+  border-color: color-mix(in oklab, var(--secundaria) 35%, transparent);
+  background: color-mix(in oklab, var(--secundaria) 10%, transparent);
+}
+.acao-mini--codigo:hover {
+  color: var(--sobre-primaria);
+  background: var(--secundaria);
+  border-color: var(--secundaria);
+  box-shadow: 0 0 14px color-mix(in oklab, var(--secundaria) 45%, transparent);
+}
+
+.estrategia__acoes { opacity: 1; }
+.estrategia__acoes .acao-mini:not(.acao-mini--codigo) { opacity: 0; transition: opacity 0.12s; }
+.estrategia:hover .estrategia__acoes .acao-mini,
+.estrategia:focus-within .estrategia__acoes .acao-mini { opacity: 1; }
+@media (hover: none) {
+  .estrategia__acoes .acao-mini { opacity: 1; }
+}
+
+/* O mesmo vale para o botão de código do cabeçalho. */
+.botao-icone--codigo {
+  color: var(--secundaria);
+  border-color: color-mix(in oklab, var(--secundaria) 38%, transparent);
+  background: color-mix(in oklab, var(--secundaria) 10%, transparent);
+}
+.botao-icone--codigo:hover {
+  color: var(--sobre-primaria);
+  background: var(--secundaria);
+  border-color: var(--secundaria);
+  box-shadow: 0 0 16px color-mix(in oklab, var(--secundaria) 45%, transparent);
+}
+
+/* ── Cartões ────────────────────────────────────────────────────────────────*/
+
+.cartao {
+  border-radius: var(--raio);
+  border-color: var(--borda-suave);
+  box-shadow: var(--sombra);
+}
+
+/* Cartão de métrica: barra de cor no topo em vez de borda chapada. */
+.metrica {
+  border-radius: var(--raio);
+  border-top-width: 1px;
+  border-color: var(--borda-suave);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.18s, transform 0.12s;
+}
+.metrica::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cor-metrica, var(--grad-acao));
+}
+.metrica:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--sombra-cor);
+}
+.metrica__valor { font-weight: 800; letter-spacing: -0.02em; }
+.metrica__rotulo { font-weight: 600; }
+
+/* ── Cartões de série: barra colorida, tinta sutil e brilho no hover ────────
+   A tinta é da cor da própria série, a 7%. Serve para o olho ligar o cartão à
+   linha no gráfico sem precisar ler o nome — que é justamente o que se perde
+   quando sete linhas se cruzam. */
+
+.serie-card {
+  border-radius: var(--raio-p);
+  border-left-width: 3px;
+  background: color-mix(in oklab, var(--cor-serie) 7%, var(--fundo));
+  transition: background 0.15s, box-shadow 0.18s, transform 0.12s, opacity 0.15s;
+}
+.serie-card:hover {
+  background: color-mix(in oklab, var(--cor-serie) 14%, var(--fundo));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--cor-serie) 26%, transparent);
+}
+.serie-card__valor { font-weight: 800; letter-spacing: -0.02em; }
+.serie-card__nome { font-weight: 600; }
+
+/* Desligada: perde a tinta e a barra, mas continua clicável para voltar. */
+.serie-card--oculta {
+  background: transparent;
+  border-left-color: var(--borda);
+}
+.serie-card--oculta:hover {
+  background: var(--fundo-elevado);
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── Estado vazio: título em degradê ────────────────────────────────────────*/
+
+.vazio {
+  border-radius: var(--raio);
+  border-color: var(--borda);
+}
+.vazio__titulo {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  background: var(--grad-marca);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.vazio__icone { color: var(--primaria); }
+.vazio__passos b { color: var(--secundaria); font-weight: 800; }
+
+/* ── Polimento geral ────────────────────────────────────────────────────────*/
+
+.campo, .botao-icone, .acao-mini, .editor, .aviso, .painel-python, .sugestoes {
+  border-radius: var(--raio-p);
+}
+
+.secao__titulo { letter-spacing: -0.01em; }
+.estrategia { border-radius: var(--raio-p); }
+.estrategia--marcada { border-color: color-mix(in oklab, var(--primaria) 28%, var(--borda)); }
+.estrategia__cor { border-radius: 999px; width: 9px; height: 9px; }
+
+.lateral { background: var(--fundo-card); }
+.gaveta-codigo { border-radius: 0; }
+
+/* Quem pediu menos movimento não recebe os deslocamentos do hover. */
+@media (prefers-reduced-motion: reduce) {
+  .serie-card:hover, .metrica:hover, .botao-primario:hover:not(:disabled) { transform: none; }
+}
+
+/* ══ GRADE DE ATIVOS ═════════════════════════════════════════════════════════
+   Era um flex-wrap: cada chip tinha a largura do próprio ticker, então
+   "BPAC11" e "CXSE3" empurravam os vizinhos e a borda direita virava uma
+   serra. Numa lista de 87 códigos com o mesmo peso, alinhamento vale mais que
+   economia de pixel — grade de colunas iguais, todos do mesmo tamanho. */
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: 5px;
+}
+
+.chip {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border-radius: var(--raio-p);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

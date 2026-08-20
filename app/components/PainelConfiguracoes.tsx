@@ -110,16 +110,17 @@ export default function PainelConfiguracoes({
 
           {comAcoes && (
             <span className="estrategia__acoes">
-              {e.doUsuario && (
-                <button
-                  className="acao-mini"
-                  onClick={onAbrirEditor}
-                  aria-label={`Editar o código de ${e.titulo}`}
-                  title="Editar código"
-                >
-                  <Icone nome="codigo" tamanho={13} />
-                </button>
-              )}
+              {/* Vale para as embutidas também: elas abrem em só leitura, e
+                  esconder o caminho para o código anulava metade do propósito
+                  do site. */}
+              <button
+                className="acao-mini acao-mini--codigo"
+                onClick={onAbrirEditor}
+                aria-label={`${e.doUsuario ? "Editar" : "Ver"} o código de ${e.titulo}`}
+                title={e.doUsuario ? "Editar código" : "Ver código"}
+              >
+                <Icone nome="codigo" tamanho={13} />
+              </button>
               <button
                 className="acao-mini"
                 onClick={() => onDuplicar(e)}
