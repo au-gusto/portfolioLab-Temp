@@ -150,7 +150,9 @@ async function main() {
   }
 
   fs.writeFileSync(ARQ_CODIGOS, carteira.join(",") + "\n", "utf8");
-  fs.writeFileSync(ARQ_PRECOS, linhas.join("\n") + "\n", "utf8");
+  // Sem quebra final: o atualizador diario anexa a quebra antes da linha
+  // nova, e um arquivo ja terminado em quebra viraria uma linha vazia.
+  fs.writeFileSync(ARQ_PRECOS, linhas.join("\n"), "utf8");
 
   console.log(`\nEscrito: ${path.relative(process.cwd(), ARQ_CODIGOS)}`);
   console.log(`Escrito: ${path.relative(process.cwd(), ARQ_PRECOS)}`);

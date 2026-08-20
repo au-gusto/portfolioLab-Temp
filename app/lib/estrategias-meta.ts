@@ -14,7 +14,9 @@
 
 export type Grupo = "estrategia" | "benchmark";
 
-export type IdEmbutido = "paridade" | "eficiente" | "ingenua" | "cdi" | "ibov" | "ipca" | "poupanca";
+export type IdEmbutido =
+  | "paridade" | "eficiente" | "minvar" | "ingenua"
+  | "cdi" | "ibov" | "ipca" | "poupanca";
 
 export interface MetaEstrategia {
   /** Embutidas têm id fixo; as do usuário usam "usuario-<timestamp>". */
@@ -45,6 +47,14 @@ export const ESTRATEGIAS: MetaEstrategia[] = [
     titulo: "Carteira Eficiente",
     descricao: "Markowitz sem restrição de venda a descoberto.",
     cor: "var(--serie-eficiente)",
+  },
+  {
+    id: "minvar",
+    grupo: "estrategia",
+    titulo: "Menor Variância",
+    descricao: "Markowitz que só minimiza risco — não estima retorno esperado.",
+    cor: "var(--serie-minvar)",
+    modos: ["rentabilidade"],
   },
   {
     id: "ingenua",

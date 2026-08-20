@@ -31,6 +31,14 @@ def recortar(inicio, fim):
 numero_ativos = len(lista_ativos)
 primeira_data_disponivel = tabela_ativos['Data'].iloc[0]
 
+# Evolução do risco da carteira, mês a mês.
+#
+# Peso igual não quer dizer risco igual nem risco constante. A volatilidade da
+# carteira 1/N muda todo mês porque as volatilidades e correlações dos ativos
+# mudam — e é exatamente esse ponto que a Paridade de Risco ataca. Guardamos a
+# série aqui para o gráfico poder mostrar as duas coisas lado a lado.
+risco_mensal = []
+
 if numero_ativos > 0:
     pesos_mes = np.full(numero_ativos, 1.0 / numero_ativos)
 
@@ -51,6 +59,21 @@ if numero_ativos > 0:
 
         # Rebalanceamento MENSAL vetorizado: o mês inteiro vira uma
         # multiplicação de matrizes, em vez de um laço dia a dia.
+        # Volatilidade anualizada da carteira na virada do mês, a partir da
+        # janela de um ano que antecede o rebalanceamento: sqrt(wᵀΣw) * sqrt(252).
+        um_ano_antes = max(inicio_mes - pd.DateOffset(years=1), primeira_data_disponivel)
+        janela = recortar(um_ano_antes, inicio_mes - pd.Timedelta(nanoseconds=1))
+        if len(janela) > 2:
+            retornos_janela = janela[lista_ativos].pct_change().dropna()
+            if len(retornos_janela) > 1:
+                cov = retornos_janela.cov().to_numpy(dtype=float)
+                variancia = float(pesos_mes @ cov @ pesos_mes)
+                if np.isfinite(variancia) and variancia >= 0:
+                    risco_mensal.append({
+                        "data": inicio_mes.strftime('%Y-%m-%d'),
+                        "risco": float(np.sqrt(variancia) * np.sqrt(252) * 100),
+                    })
+
         precos_mes = dados_mes[lista_ativos].to_numpy(dtype=float)
         fatores = (precos_mes / precos_base) @ pesos_mes
         valores = retorno_acumulado * fatores

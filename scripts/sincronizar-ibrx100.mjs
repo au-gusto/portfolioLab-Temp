@@ -122,7 +122,9 @@ function escreverBase(arquivo, base, ordemTickers) {
     linhas.push(celulas.join(","));
   }
 
-  fs.writeFileSync(arquivo, linhas.join(quebra) + quebra, "utf8");
+  // Sem quebra final, pelo mesmo motivo do montador: o atualizador diario
+  // anexa `quebra + linha` e criaria uma linha vazia no meio do CSV.
+  fs.writeFileSync(arquivo, linhas.join(quebra), "utf8");
 }
 
 // ─── B3 e Yahoo ───────────────────────────────────────────────────────────────

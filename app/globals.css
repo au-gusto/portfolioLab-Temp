@@ -59,6 +59,7 @@
   --serie-ibov: #7C3AED;
   --serie-ipca: #DC2626;
   --serie-poupanca: #65A30D;
+  --serie-minvar: #DB2777;
 
   /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
      para nenhum parecer mais importante só por ser mais claro. */
@@ -147,6 +148,7 @@
     --serie-ibov: #8A7BB2;
     --serie-ipca: #B57279;
     --serie-poupanca: #879B58;
+    --serie-minvar: #B0759B;
 
     --cat-1: #4FA3B5;
     --cat-2: #529E76;
@@ -209,6 +211,7 @@
   --serie-ibov: #8A7BB2;
   --serie-ipca: #B57279;
   --serie-poupanca: #879B58;
+  --serie-minvar: #B0759B;
 
   --cat-1: #4FA3B5;
   --cat-2: #529E76;
@@ -1890,3 +1893,64 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   border-top: 1px dashed var(--borda);
 }
 .base-propria .dica { margin-top: 6px; }
+
+/* ══ TABELA DE RISCO ═════════════════════════════════════════════════════════ */
+
+.tabela-metricas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.tabela-metricas th,
+.tabela-metricas td {
+  padding: 7px 10px;
+  text-align: right;
+}
+
+.tabela-metricas thead th {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  border-bottom: 1px solid var(--borda);
+}
+
+/* A primeira coluna é o nome da série: alinha à esquerda e não compete com os
+   números, que ficam todos à direita para as casas decimais se empilharem. */
+.tabela-metricas th:first-child,
+.tabela-metricas tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.tabela-metricas tbody th {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tabela-metricas__marca {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.tabela-metricas tbody tr + tr th,
+.tabela-metricas tbody tr + tr td {
+  border-top: 1px solid var(--borda-suave);
+}
+
+.tabela-metricas tbody tr:hover th,
+.tabela-metricas tbody tr:hover td {
+  background: var(--fundo);
+}
+
+@media (max-width: 900px) {
+  .tabela-metricas { font-size: 12px; }
+  .tabela-metricas th, .tabela-metricas td { padding: 6px 8px; }
+}

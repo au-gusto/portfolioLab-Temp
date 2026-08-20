@@ -32,6 +32,8 @@ import StatusSimulacao, { type EstadoEstrategia } from "./StatusSimulacao";
 import Grafico_aportes from "./Grafico";
 import Grafico_rentabilidade from "./Grafico - Rentabilidade";
 import GraficosParidade from "./GraficosParidade";
+import GraficoRisco, { type PontoRisco } from "./GraficoRisco";
+import PainelMetricas from "./PainelMetricas";
 
 import { codigoCDI } from "../estrategias/cdi";
 import { codigoParidade } from "../estrategias/paridade";
@@ -40,6 +42,7 @@ import { codigoCDI_rentabilidade } from "../estrategias/cdi - Rentabilidade";
 import { codigoParidade_rentabilidade } from "../estrategias/paridade - Rentabilidade";
 import { codigoEficiente_rentabilidade } from "../estrategias/eficiente - Rentabilidade";
 import { codigoIngenua_rentabilidade } from "../estrategias/ingenua - Rentabilidade";
+import { codigoMinVar_rentabilidade } from "../estrategias/minvar - Rentabilidade";
 import {
   codigoIbov, codigoIpca, codigoPoupanca,
   codigoIbov_rentabilidade, codigoIpca_rentabilidade, codigoPoupanca_rentabilidade,
@@ -66,6 +69,9 @@ function codigosEmbutidos(modo: "aportes" | "rentabilidade"): Record<string, str
   return {
     paridade: aportes ? codigoParidade : codigoParidade_rentabilidade,
     eficiente: aportes ? codigoEficiente : codigoEficiente_rentabilidade,
+    // Só existe em Rentabilidade, como a Ingênua: o modo Patrimônio precisa
+    // da máquina de quantidades, que é outro trabalho.
+    minvar: aportes ? "" : codigoMinVar_rentabilidade,
     ingenua: codigoIngenua_rentabilidade,
     cdi: aportes ? codigoCDI : codigoCDI_rentabilidade,
     ibov: aportes ? codigoIbov : codigoIbov_rentabilidade,
@@ -97,6 +103,17 @@ export interface AlocacaoMes {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+/** O Python devolve uma lista de dicts; aqui ela vira o formato do gráfico. */
+function normalizarRisco(bruto: unknown): PontoRisco[] {
+  if (!Array.isArray(bruto)) return [];
+  return bruto
+    .map((p) => {
+      const o = p as Record<string, unknown>;
+      return { data: String(o?.data ?? ""), risco: Number(o?.risco) };
+    })
+    .filter((p) => p.data && Number.isFinite(p.risco));
+}
+
 function normalizarAlocacao(raw: any): AlocacaoMes[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -224,6 +241,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
 
   const [resultados, setResultados] = useState<Resultados>({});
   const [alocacaoParidade, setAlocacaoParidade] = useState<AlocacaoMes[]>([]);
+  const [riscoIngenua, setRiscoIngenua] = useState<PontoRisco[]>([]);
   const [ativosUsados, setAtivosUsados] = useState<string[]>([]);
 
   const [carregamento, setCarregamento] = useState<EstadoCarregamento | null>(null);
@@ -457,6 +475,17 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         setAlocacaoParidade([]);
       }
 
+      if (marcados.includes("ingenua") && novo.ingenua) {
+        try {
+          setRiscoIngenua(normalizarRisco(await lerVariavelPython("risco_mensal")));
+        } catch (e) {
+          console.error("Erro ao ler o risco da ingênua:", e);
+          setRiscoIngenua([]);
+        }
+      } else {
+        setRiscoIngenua([]);
+      }
+
       setConfigSimulacao({
         aporteInicial: prefs.aporteInicial,
         aportesMensal: prefs.aporteMensal,
@@ -592,8 +621,14 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
                 />
               )}
 
+              <PainelMetricas series={seriesDoModo.map((id) => lista.find((e) => e.id === id)!).filter(Boolean)} dados={resultados} />
+
               {marcados.includes("paridade") && alocacaoParidade.length > 0 && (
                 <GraficosParidade alocacao={alocacaoParidade} />
+              )}
+
+              {marcados.includes("ingenua") && riscoIngenua.length > 1 && (
+                <GraficoRisco risco={riscoIngenua} />
               )}
             </>
           )}

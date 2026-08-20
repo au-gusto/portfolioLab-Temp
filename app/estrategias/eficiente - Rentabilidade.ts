@@ -32,6 +32,46 @@ retorno_acumulado = 1.0
 limiar_volatilidade_minima = 13
 
 # =============================================
+# TETO DE ALAVANCAGEM
+# =============================================
+
+# Markowitz sem restricao produz pesos que somam 1 mas podem ser enormes em
+# modulo: comprar 800% de um papel vendendo 700% de outro tambem soma 1. A
+# carteira resultante e matematicamente otima e financeiramente impossivel —
+# era dai que saia o retorno de +6.042.416% no historico completo.
+#
+# O limite e a exposicao BRUTA maxima: soma dos modulos dos pesos. 2.0 permite,
+# por exemplo, 150% comprado contra 50% vendido. Aumente se quiser a carteira
+# irrestrita de volta; 1.0 forcaria long-only.
+limite_alavancagem = 2.0
+
+def limitar_alavancagem(pesos, limite=limite_alavancagem):
+    """Puxa os pesos na direcao do 1/N ate a exposicao bruta caber no limite.
+
+    Encolher na direcao do peso igual (e nao simplesmente multiplicar tudo por
+    uma constante) preserva a soma 1: a carteira continua totalmente investida,
+    so deixa de ser alavancada. Como a exposicao bruta e convexa no fator de
+    mistura, o conjunto que respeita o limite e um intervalo e a busca binaria
+    acha a borda com seguranca.
+    """
+    pesos = np.asarray(pesos, dtype=float)
+    n = len(pesos)
+    if n == 0 or not np.all(np.isfinite(pesos)):
+        return pesos
+    if np.abs(pesos).sum() <= limite:
+        return pesos
+
+    referencia = np.full(n, 1.0 / n)
+    baixo, alto = 0.0, 1.0
+    for _ in range(50):
+        meio = (baixo + alto) / 2.0
+        if np.abs(meio * pesos + (1.0 - meio) * referencia).sum() <= limite:
+            baixo = meio
+        else:
+            alto = meio
+    return baixo * pesos + (1.0 - baixo) * referencia
+
+# =============================================
 # FUNÇÕES
 # =============================================
 
@@ -85,7 +125,10 @@ def calcular_pesos_eficiente(retornos_historicos_, ativos_validos_, cdi_medio_di
         return None
 
     pesos = pesos_nao_normalizados / normalizador
-    return pesos
+
+    # Sem este teto a carteira otima vira uma posicao alavancada que ninguem
+    # conseguiria montar, e o retorno acumulado explode.
+    return limitar_alavancagem(pesos)
 
 # =============================================
 # LOOP MENSAL

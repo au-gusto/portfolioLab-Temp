@@ -23,6 +23,39 @@ const yahoo = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 const DIR = path.join(process.cwd(), "public", "Dados");
 const ARQ_ATIVOS = path.join(DIR, "Dados_Ativos_B3_AdjClose.csv");
 const ARQ_IBRX100 = path.join(DIR, "Dados_Ativos_IBRX100_AdjClose.csv");
+const ARQ_HISTORICO = path.join(DIR, "historico-indice.json");
+
+// Quanto tempo um papel continua sendo atualizado depois de sair do IBRX-100.
+// Ele nao e apagado: a serie inteira continua la e segue simulavel. So para de
+// receber pregao novo, porque manter 200 papeis vivos indefinidamente e
+// requisicao ao Yahoo que nao serve para nada.
+const ANOS_APOS_SAIDA = 2;
+
+/**
+ * Tickers que sairam do indice ha mais de ANOS_APOS_SAIDA e ja podem parar.
+ *
+ * A data de saida vem do historico-indice.json, escrito pelo sincronizador. Sem
+ * o arquivo (ainda nunca houve reavaliacao) ninguem esta aposentado.
+ */
+function lerAposentados() {
+  let historico;
+  try {
+    historico = JSON.parse(fs.readFileSync(ARQ_HISTORICO, "utf-8"));
+  } catch {
+    return new Set();
+  }
+
+  const corte = new Date();
+  corte.setFullYear(corte.getFullYear() - ANOS_APOS_SAIDA);
+  const limite = corte.toISOString().slice(0, 10);
+
+  const saidas = historico?.saidas ?? {};
+  return new Set(
+    Object.entries(saidas)
+      .filter(([, data]) => typeof data === "string" && data < limite)
+      .map(([ticker]) => ticker),
+  );
+}
 const ARQ_CDI = path.join(DIR, "cdi_data_total.csv");
 const ARQ_STATUS = path.join(DIR, "atualizado-em.json");
 const ARQ_IBOV = path.join(DIR, "ibov.csv");
@@ -126,7 +159,7 @@ function amanha() {
 
 // ─── Ativos ───────────────────────────────────────────────────────────────────
 
-async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos") {
+async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos", aposentados = new Set()) {
   if (!fs.existsSync(arquivo)) {
     console.log(`${rotulo}: arquivo ausente — pulando.`);
     return { novos: 0, ultimaData: null, tickers: 0, falhos: [] };
@@ -187,8 +220,16 @@ async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos") {
     }
   }
 
-  for (let i = 0; i < tickers.length; i += LOTE) {
-    const bloco = tickers.slice(i, i + LOTE);
+  // Aposentado nao vai ao Yahoo: recebe forward-fill como qualquer papel sem
+  // pregao no dia. O app ja avisa "sem cotacao nova desde X" para esses casos,
+  // entao a tela continua dizendo a verdade sem precisar de aviso novo.
+  const emBusca = tickers.filter((t) => !aposentados.has(t));
+  for (const t of tickers) {
+    if (aposentados.has(t)) series[t] = new Map();
+  }
+
+  for (let i = 0; i < emBusca.length; i += LOTE) {
+    const bloco = emBusca.slice(i, i + LOTE);
     await Promise.all(bloco.map(async (t) => {
       const m = await buscar(t);
       if (m === null || m.size === 0) {
@@ -198,16 +239,16 @@ async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos") {
         series[t] = m;
       }
     }));
-    process.stdout.write(`\r  ${Math.min(i + LOTE, tickers.length)}/${tickers.length} tickers`);
+    process.stdout.write(`\r  ${Math.min(i + LOTE, emBusca.length)}/${emBusca.length} tickers`);
   }
   console.log();
 
   // Um pregao existe se a maioria dos ativos negociou nele.
   const contagem = new Map();
-  for (const t of tickers) {
+  for (const t of emBusca) {
     for (const d of series[t].keys()) contagem.set(d, (contagem.get(d) ?? 0) + 1);
   }
-  const minimo = Math.max(2, Math.floor(tickers.length * 0.5));
+  const minimo = Math.max(2, Math.floor(emBusca.length * 0.5));
   const datas = [...contagem.entries()]
     .filter(([, n]) => n >= minimo)
     .map(([d]) => d)
@@ -228,7 +269,18 @@ async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos") {
   });
 
   if (novas.length) {
-    fs.appendFileSync(arquivo, quebra + novas.join(quebra));
+    // Se o arquivo ja termina em quebra — quem o gerou pode ter deixado uma —
+    // anexar outra abre uma linha vazia no meio do CSV. O pandas ignora linha
+    // vazia e o validador tambem, entao o estrago passaria despercebido ate
+    // alguem abrir o arquivo a mao.
+    const terminaEmQuebra = /\r?\n$/.test(fs.readFileSync(arquivo, "utf-8"));
+    fs.appendFileSync(arquivo, (terminaEmQuebra ? "" : quebra) + novas.join(quebra));
+  }
+  if (aposentados.size) {
+    const quais = tickers.filter((t) => aposentados.has(t));
+    if (quais.length) {
+      console.log(`  ${quais.length} aposentado(s) (fora do indice ha mais de ${ANOS_APOS_SAIDA} anos): ${quais.join(", ")}`);
+    }
   }
   console.log(`  +${novas.length} pregoes` + (datas.length ? ` (ate ${datas[datas.length - 1]})` : ""));
   return { novos: novas.length, ultimaData: datas.at(-1) ?? ultimaData, tickers: tickers.length, falhos };
@@ -353,7 +405,8 @@ async function atualizarIndicesMensais() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const ativos = await atualizarAtivos(ARQ_ATIVOS, "Ativos (Outros)");
+const aposentados = lerAposentados();
+const ativos = await atualizarAtivos(ARQ_ATIVOS, "Ativos (Outros)", aposentados);
 
 // A base do IBRX-100 precisa envelhecer junto. Deixar so uma delas no cron era
 // repetir o problema que ja tivemos: cotacao congelada por meses sem nada na
@@ -371,6 +424,7 @@ fs.writeFileSync(ARQ_STATUS, JSON.stringify({
   ibov: { ultimoPregao: ibov },
   indicesMensais: { ultimoMes: indices },
   tickersSemDados: ativos.falhos,
+  aposentados: [...aposentados],
 }, null, 2) + "\n");
 
 console.log("\nResumo gravado em public/Dados/atualizado-em.json");
