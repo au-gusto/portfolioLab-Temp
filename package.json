@@ -9,11 +9,11 @@
     "lint": "eslint",
     "dados": "node scripts/atualizar-dados.mjs",
     "dados:validar": "node scripts/validar-dados.mjs",
-    "dados:espelhar": "node scripts/espelhar-supabase.mjs"
+    "dados:ibrx": "node scripts/sincronizar-ibrx100.mjs",
+    "dados:ibrx:simular": "node scripts/sincronizar-ibrx100.mjs --simular",
+    "dados:ibrx:montar": "node scripts/montar-ibrx100.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.99.2",
-    "csv-parse": "^6.1.0",
     "next": "16.1.6",
     "papaparse": "^5.5.3",
     "react": "19.2.3",
@@ -22,14 +22,12 @@
     "yahoo-finance2": "^3.13.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

@@ -1,4 +1,130 @@
-@import "tailwindcss";
+/* ══ REESTABELECIMENTO ═══════════════════════════════════════════════════════
+   Isto substitui o preflight do Tailwind, que saiu junto com o Tailwind.
+
+   O projeto não usava uma única classe utilitária dele — todos os nomes de
+   classe no JSX são nossos. O que o Tailwind de fato fazia aqui era zerar os
+   estilos padrão do navegador, e isso são quarenta linhas de CSS, não uma
+   dependência de build com engine própria.
+
+   As regras abaixo reproduzem o preflight nos elementos que o app usa. Foram
+   conferidas medindo os valores computados antes e depois da troca, elemento
+   por elemento. */
+
+/* O `*` zera margem e espaçamento de tudo — é o que apaga os padrões de
+   <p>, <ul>, <td> e <fieldset> de uma vez, e o que faz cada componente ter
+   exatamente o espaçamento que a classe dele pede, nem mais. */
+*, ::before, ::after, ::backdrop, ::file-selector-button {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid currentColor;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+body {
+  margin: 0;
+  line-height: inherit;
+}
+
+/* Títulos herdam tamanho e peso: quem define é a classe, não a tag. Sem isto,
+   um <h1> sem classe apareceria em 32px negrito no meio do layout. */
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
+}
+
+p, figure, blockquote, dl, dd, pre { margin: 0; }
+
+ol, ul, menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+hr {
+  margin: 0;
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
+
+a { color: inherit; text-decoration: inherit; }
+
+b, strong { font-weight: bolder; }
+
+code, kbd, samp, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1em;
+}
+
+small { font-size: 80%; }
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
+sub { bottom: -0.25em; }
+sup { top: -0.5em; }
+
+table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+/* Controles de formulário não herdam tipografia sozinhos — é por isso que um
+   <input> nasce com a fonte do sistema mesmo dentro de um corpo com fonte
+   própria. */
+/* Controles de formulário não herdam tipografia sozinhos — é por isso que um
+   <input> nasce com a fonte do sistema mesmo dentro de um corpo com fonte
+   própria. O fundo transparente também é deliberado: sem ele o navegador
+   pinta um cinza próprio que ignora o tema. */
+button, input, optgroup, select, textarea, ::file-selector-button {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  border-radius: 0;
+  background-color: transparent;
+  opacity: 1;
+}
+
+button, select { text-transform: none; }
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+:-moz-focusring { outline: auto; }
+
+/* O placeholder do Tailwind era um cinza fixo, que no tema escuro ficava fora
+   da paleta. Aqui ele passa a seguir o token de texto suave. */
+::placeholder { opacity: 1; color: var(--texto-suave); }
+
+textarea { resize: vertical; }
+
+::-webkit-inner-spin-button, ::-webkit-outer-spin-button { height: auto; }
+[type="search"] { -webkit-appearance: textfield; outline-offset: -2px; }
+::-webkit-search-decoration { -webkit-appearance: none; }
+::-webkit-file-upload-button { -webkit-appearance: button; font: inherit; }
+
+summary { display: list-item; }
+
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  vertical-align: middle;
+}
+img, video { max-width: 100%; height: auto; }
+
+[hidden] { display: none; }
+
 
 /* ══ PALETA CLARA ════════════════════════════════════════════════════════════
    Índigo sobre um branco levemente esverdiado. O fundo não é cinza neutro de
@@ -1452,34 +1578,8 @@ input[type="checkbox"] { accent-color: var(--primaria); }
 }
 .editor__titulo { font-weight: 600; }
 
-.editor__codigo {
-  width: 100%;
-  min-height: 340px;
-  background: var(--fundo);
-  color: var(--texto);
-  border: 1px solid var(--borda-suave);
-  border-radius: var(--raio-p);
-  padding: 10px 12px;
-  font-size: 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  line-height: 1.55;
-  resize: vertical;
-  outline: none;
-  tab-size: 4;
-}
-.editor__codigo:focus { border-color: var(--primaria); }
-
-/* Só leitura fica visivelmente diferente de editável — sem isso o usuário
-   digita e não entende por que nada acontece. */
-.editor__codigo--leitura {
-  color: var(--texto-suave);
-  background: var(--fundo-elevado);
-  cursor: default;
-}
-
 @media (max-width: 900px) {
   .gaveta-codigo { width: 100%; padding: 14px; }
-  .editor__codigo { min-height: 260px; }
 }
 
 /* ══ REDESIGN: ELEMENTOS VISUAIS NO LUGAR DE TEXTO ═══════════════════════════
@@ -1953,4 +2053,339 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 @media (max-width: 900px) {
   .tabela-metricas { font-size: 12px; }
   .tabela-metricas th, .tabela-metricas td { padding: 6px 8px; }
+}
+
+/* ══ EDITOR DE PYTHON ════════════════════════════════════════════════════════
+   Duas camadas alinhadas ao pixel: um <pre> colorido embaixo e um <textarea>
+   transparente em cima. Toda medida de tipografia é declarada uma vez, na
+   variável, e herdada pelas duas — qualquer diferença de fonte, tamanho ou
+   entrelinha entre elas desloca o texto e o cursor sai do lugar. */
+
+.codigo-caixa {
+  position: relative;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  background: var(--fundo);
+  overflow: hidden;
+}
+
+.codigo-caixa__expandir {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--fundo-card);
+  color: var(--texto-suave);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.14s, color 0.14s, border-color 0.14s;
+}
+.codigo-caixa:hover .codigo-caixa__expandir,
+.codigo-caixa__expandir:focus-visible { opacity: 1; }
+.codigo-caixa__expandir:hover { color: var(--secundaria); border-color: var(--secundaria); }
+
+.codigo-caixa__ausente {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.codigo {
+  --codigo-fonte: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --codigo-tamanho: 12.5px;
+  --codigo-linha: 1.65;
+  --codigo-recuo: 12px;
+
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  background: var(--fundo);
+}
+
+/* Régua de linhas. `aria-hidden`, porque para quem usa leitor de tela a
+   numeração é ruído — o conteúdo é o código. */
+.codigo__regua {
+  flex-shrink: 0;
+  padding: var(--codigo-recuo) 8px var(--codigo-recuo) 10px;
+  border-right: 1px solid var(--borda-suave);
+  background: var(--fundo-elevado);
+  color: var(--texto-suave);
+  font-family: var(--codigo-fonte);
+  font-size: var(--codigo-tamanho);
+  line-height: var(--codigo-linha);
+  text-align: right;
+  overflow: hidden;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  opacity: 0.65;
+}
+.codigo__regua span { display: block; }
+
+.codigo__campo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.codigo__realce,
+.codigo__area {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: var(--codigo-recuo);
+  border: none;
+  font-family: var(--codigo-fonte);
+  font-size: var(--codigo-tamanho);
+  line-height: var(--codigo-linha);
+  letter-spacing: normal;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+  word-wrap: normal;
+}
+
+.codigo__realce {
+  z-index: 1;
+  pointer-events: none;
+  color: var(--texto);
+  background: transparent;
+}
+.codigo__realce code { font: inherit; background: none; border: none; padding: 0; }
+
+.codigo__area {
+  z-index: 2;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--secundaria);
+  resize: none;
+  outline: none;
+}
+.codigo__area::selection { background: color-mix(in oklab, var(--primaria) 34%, transparent); }
+.codigo__area:focus-visible { outline: none; }
+.codigo:focus-within { box-shadow: inset 0 0 0 1px var(--primaria); }
+
+/* Só leitura fica visivelmente diferente: campo que aceita digitação e
+   descarta o que foi digitado é pior que campo bloqueado. */
+.codigo--leitura .codigo__realce { opacity: 0.82; }
+.codigo--leitura .codigo__area { cursor: default; caret-color: transparent; }
+
+/* ── Cores do léxico ─────────────────────────────────────────────────────────
+   Seguem os tokens do tema, não uma paleta de editor importada: no modo
+   noturno as cores de um tema de editor comum voltariam a berrar, que é
+   exatamente o que acabamos de corrigir no resto da tela. */
+.py-comentario { color: var(--texto-suave); font-style: italic; }
+.py-texto      { color: var(--serie-poupanca); }
+.py-palavra    { color: var(--serie-ibov); font-weight: 600; }
+.py-embutido   { color: var(--serie-eficiente); }
+.py-numero     { color: var(--serie-ingenua); }
+.py-definicao  { color: var(--serie-paridade); font-weight: 600; }
+.py-decorador  { color: var(--serie-ipca); }
+.py-operador   { color: var(--texto-suave); }
+
+/* ── Tela cheia ──────────────────────────────────────────────────────────── */
+.codigo-cheia {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: var(--fundo);
+  display: flex;
+  flex-direction: column;
+}
+
+.codigo-cheia__topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--fundo-card);
+  flex-shrink: 0;
+}
+.codigo-cheia__titulo {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.codigo-cheia__contagem {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+.codigo-cheia__corpo { flex: 1; min-height: 0; }
+
+/* ══ PUXADOR DA LATERAL ══════════════════════════════════════════════════════
+   Botão redondo na costura entre a configuração e os resultados. A faixa em
+   volta é a área de alvo: ela é invisível e larga o bastante para o ponteiro
+   encontrar o botão sem mira, sem ocupar espaço no layout. */
+
+.puxador-zona {
+  position: sticky;
+  top: var(--altura-cabecalho);
+  align-self: stretch;
+  width: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.puxador {
+  position: absolute;
+  top: calc(50vh - var(--altura-cabecalho));
+  left: -15px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: var(--fundo-card);
+  color: var(--texto-suave);
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: var(--sombra);
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity 0.16s, transform 0.16s, color 0.14s, border-color 0.14s;
+}
+
+/* Aparece quando o ponteiro chega perto da costura, e some de novo depois. */
+.puxador::before {
+  content: "";
+  position: absolute;
+  inset: -26px -34px;
+  border-radius: 999px;
+}
+.puxador:hover,
+.puxador:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+  color: var(--primaria);
+  border-color: var(--primaria);
+}
+.corpo:hover .puxador { opacity: 0.55; transform: scale(1); }
+.corpo:hover .puxador:hover { opacity: 1; }
+
+/* Recolhida, o puxador fica sempre visível: é o único caminho de volta. */
+.puxador-zona--recolhida .puxador { opacity: 1; transform: scale(1); }
+
+.lateral {
+  transition: width 0.22s ease, padding 0.22s ease, opacity 0.16s ease;
+}
+
+.lateral--recolhida {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right-color: transparent;
+  opacity: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lateral { transition: none; }
+  .puxador { transition: none; }
+}
+
+/* No celular a lateral já é gaveta: retrair não faz sentido, e o puxador
+   apontaria para um painel que não está no fluxo. */
+@media (max-width: 900px) {
+  .puxador-zona { display: none; }
+  .lateral--recolhida {
+    width: 100%;
+    padding: 20px;
+    opacity: 1;
+  }
+}
+
+/* ══ CAMPOS NO CELULAR ═══════════════════════════════════════════════════════
+   O Safari do iPhone dá zoom na página inteira quando o foco cai num campo com
+   fonte menor que 16px — e não desfaz o zoom ao sair. O resultado é a tela
+   inteira "gigante" depois de tocar num input, que foi exatamente o relato.
+
+   A correção é a fonte, não o viewport: travar a escala com `maximum-scale=1`
+   também resolveria, ao custo de impedir que qualquer pessoa amplie a página.
+   Acessibilidade não se paga com isso. */
+
+@media (max-width: 900px) {
+  .campo,
+  input[type="text"],
+  input[type="date"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select,
+  .orcamento__campo,
+  .referencia__campo,
+  .metrica__entrada input,
+  .codigo__area,
+  .codigo__realce {
+    font-size: 16px;
+  }
+
+  /* A régua acompanha, senão a numeração sai de registro com o código. */
+  .codigo { --codigo-tamanho: 16px; }
+}
+
+/* ══ FILTROS E NÍVEIS DO DIAGNÓSTICO ═════════════════════════════════════════ */
+
+.diagnostico__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--borda-suave);
+}
+
+.diagnostico__filtro {
+  font-size: 10.5px;
+  padding: 3px 7px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.diagnostico__filtro:hover:not(:disabled) { color: var(--texto); border-color: var(--texto-suave); }
+.diagnostico__filtro:disabled { opacity: 0.4; cursor: default; }
+.diagnostico__filtro--ativo {
+  color: var(--sobre-primaria);
+  background: var(--primaria);
+  border-color: var(--primaria);
+}
+.diagnostico__filtro span { opacity: 0.7; margin-left: 2px; }
+
+.diagnostico__hora {
+  font-size: 10px;
+  color: var(--texto-suave);
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+/* Nível vira uma faixa na borda: erro e aviso precisam saltar numa lista
+   longa, e cor de texto sozinha se perde entre as linhas de detalhe. */
+.diagnostico__item--aviso {
+  border-left: 2px solid var(--atencao);
+  padding-left: 8px;
+  background: var(--atencao-fundo);
+}
+.diagnostico__item--erro {
+  border-left: 2px solid var(--negativo);
+  padding-left: 8px;
+  background: var(--negativo-fundo);
 }

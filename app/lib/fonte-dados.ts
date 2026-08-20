@@ -48,7 +48,7 @@ function caminho(arquivo: string) {
  * A tabela inteira não é serializada para o navegador: virava ~2,4 MB de JSON
  * embutido no HTML de toda visita.
  */
-export function lerTickers(arquivo: string = ARQ_ATIVOS): string[] {
+function lerTickers(arquivo: string = ARQ_ATIVOS): string[] {
   const fd = fs.openSync(caminho(arquivo), "r");
   try {
     // O cabeçalho tem ~700 bytes; 8 KB cobrem com folga sem ler o arquivo todo.
@@ -137,7 +137,7 @@ export function lerTickersPorBase(): Record<string, string[]> {
  * estratégia inteira — a matriz de covariância sai com NaN e o otimizador
  * devolve nada. Sem esta lista, o usuário via o cartão simplesmente sumir.
  */
-export function lerEstreias(arquivo: string): Record<string, string> {
+function lerEstreias(arquivo: string): Record<string, string> {
   const conteudo = fs.readFileSync(caminho(arquivo), "utf-8");
   const linhas = conteudo.split(/\r?\n/).filter((l) => l.trim());
   if (linhas.length < 2) return {};

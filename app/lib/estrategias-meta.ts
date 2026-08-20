@@ -14,10 +14,6 @@
 
 export type Grupo = "estrategia" | "benchmark";
 
-export type IdEmbutido =
-  | "paridade" | "eficiente" | "minvar" | "ingenua"
-  | "cdi" | "ibov" | "ipca" | "poupanca";
-
 export interface MetaEstrategia {
   /** Embutidas têm id fixo; as do usuário usam "usuario-<timestamp>". */
   id: string;
@@ -99,8 +95,6 @@ export const ESTRATEGIAS: MetaEstrategia[] = [
   },
 ];
 
-export type IdSerie = string;
-
 /**
  * Catálogo completo: as embutidas mais as que o usuário escreveu.
  *
@@ -146,13 +140,8 @@ export function precisaDeAtivos(id: string): boolean {
   return meta ? meta.grupo === "estrategia" : true;
 }
 
-export function corDaEstrategia(id: string, lista: MetaEstrategia[] = ESTRATEGIAS): string {
-  return lista.find((e) => e.id === id)?.cor ?? "var(--texto-suave)";
-}
-
 export function nomeDaEstrategia(id: string, lista: MetaEstrategia[] = ESTRATEGIAS): string {
   return lista.find((e) => e.id === id)?.titulo ?? id;
 }
 
 /** Compat: alguns componentes ainda chamam pelo nome antigo. */
-export const estrategiasDoModo = doModo;

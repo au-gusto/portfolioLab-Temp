@@ -9,7 +9,7 @@
  * continua respondendo — spinners giram, botões clicam, nada congela.
  */
 
-import { anotarDoWorker } from "./diagnostico";
+import { anotarDoWorker, registrar, registrarErro } from "./diagnostico";
 
 export type FaseCarregamento = "ocioso" | "runtime" | "pacotes" | "dados" | "pronto" | "falha";
 
@@ -70,6 +70,8 @@ export function iniciarPyodide(): Promise<void> {
     rejeitarPronto = reject;
   });
 
+  const comecou = performance.now();
+  registrar("sistema", "worker do Python iniciado");
   worker = new Worker("/pyodide-worker.js");
 
   worker.onmessage = (evento) => {
@@ -94,11 +96,17 @@ export function iniciarPyodide(): Promise<void> {
 
       case "pronto":
         publicar({ fase: "pronto", pct: 100, detalhe: "Tudo pronto" });
+        registrar("carregamento", "Python pronto para simular", [
+          `${((performance.now() - comecou) / 1000).toFixed(1)} s do início ao pronto`,
+        ]);
         resolverPronto?.();
         break;
 
       case "falha":
         publicar({ fase: "falha", detalhe: "Falha ao carregar", erro: msg.mensagem });
+        registrarErro("carregamento", "o Python não carregou", msg.mensagem, [
+          `parou depois de ${((performance.now() - comecou) / 1000).toFixed(1)} s`,
+        ]);
         rejeitarPronto?.(new Error(msg.mensagem));
         break;
 
@@ -117,6 +125,9 @@ export function iniciarPyodide(): Promise<void> {
   };
 
   worker.onerror = (evento) => {
+    registrarErro("sistema", "o worker do Python caiu", evento.message, [
+      "as simulações param até recarregar a página",
+    ]);
     const mensagem = evento.message || "Erro desconhecido no worker do Python";
     publicar({ fase: "falha", detalhe: "Falha ao carregar", erro: mensagem });
     rejeitarPronto?.(new Error(mensagem));
@@ -143,7 +154,7 @@ export async function executarEstrategia(
   perfilar = false,
   base?: { id: string; arquivo: string }
 ): Promise<{ data: string; valor: number }[]> {
-  return (await enviar({ tipo: "executar", codigo, variaveis, bruto: false, perfilar, base })) as {
+  return (await enviar({ tipo: "executar", codigo, variaveis, perfilar, base })) as {
     data: string;
     valor: number;
   }[];
@@ -169,19 +180,6 @@ export interface LaudoBase {
  */
 export async function usarBasePropria(nome: string, bytes: ArrayBuffer): Promise<LaudoBase> {
   return (await enviar({ tipo: "usarBasePropria", nome, bytes })) as LaudoBase;
-}
-
-/** Deixa uma base já montada no Python, para o clique seguinte não esperar. */
-export async function prepararBase(base: { id: string; arquivo: string }): Promise<void> {
-  await enviar({ tipo: "trocarBase", base });
-}
-
-/** Roda um código Python e devolve o retorno cru, sem normalizar. */
-export async function executarEstrategiaBruta(
-  codigo: string,
-  variaveis: Record<string, unknown>
-): Promise<unknown> {
-  return enviar({ tipo: "executar", codigo, variaveis, bruto: true });
 }
 
 /**

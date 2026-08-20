@@ -18,8 +18,6 @@
 export interface BaseAtivos {
   id: string;
   titulo: string;
-  /** Frase curta mostrada abaixo do seletor. */
-  descricao: string;
   /** Caminho do CSV servido pela CDN (vazio quando a base é do usuário). */
   arquivo: string;
   /**
@@ -39,19 +37,12 @@ export const BASES: BaseAtivos[] = [
   {
     id: "ibrx100",
     titulo: "IBRX-100",
-    descricao:
-      "Carteira do IBRX-100 direto da B3. Os dados começam em 2023, mas a "
-      + "simulação só é liberada a partir de 2024 — o primeiro ano serve de "
-      + "histórico para o cálculo de risco.",
     arquivo: "/Dados/Dados_Ativos_IBRX100_AdjClose.csv",
     inicioMinimo: "2024-01-01",
   },
   {
     id: "outros",
     titulo: "Outros",
-    descricao:
-      "Papéis fora do IBRX-100 hoje — a carteira antiga do Ibovespa mais quem "
-      + "saiu do índice em alguma reavaliação. Cotações desde 2018.",
     arquivo: "/Dados/Dados_Ativos_B3_AdjClose.csv",
     inicioMinimo: null,
   },
@@ -64,7 +55,6 @@ export function basePropria(titulo: string): BaseAtivos {
   return {
     id: ID_BASE_PROPRIA,
     titulo,
-    descricao: "Seus dados, lidos no navegador. Nada é enviado para o servidor.",
     arquivo: "",
     inicioMinimo: null,
     doUsuario: true,

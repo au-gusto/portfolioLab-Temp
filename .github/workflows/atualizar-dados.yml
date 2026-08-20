@@ -53,14 +53,3 @@ jobs:
           git add public/Dados
           git commit -m "dados: cotações até $(date -u +%d/%m/%Y)"
           git push
-
-      # ── Espelho opcional no Supabase ────────────────────────────────────────
-      # Só roda se os segredos existirem. O app NÃO lê daqui: é espelho, para
-      # quem quiser consultar os dados por SQL ou para features futuras que
-      # precisem de escrita por usuário.
-      - name: Espelhar no Supabase
-        if: env.SUPABASE_URL != ''
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/espelhar-supabase.mjs

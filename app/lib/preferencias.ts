@@ -14,6 +14,7 @@
  */
 
 import { BASES, BASE_PADRAO } from "./catalogo-ativos";
+import { registrar, avisarProblema } from "./diagnostico";
 
 const CHAVE = "portfolio-lab:v1";
 
@@ -44,7 +45,7 @@ export interface Preferencias {
 }
 
 /** Fim = hoje; início = um ano atrás. */
-export function periodoPadrao(): { inicio: string; fim: string } {
+function periodoPadrao(): { inicio: string; fim: string } {
   const hoje = new Date();
   const antes = new Date(hoje);
   antes.setFullYear(antes.getFullYear() - 1);
@@ -128,9 +129,24 @@ export function carregar(): Preferencias {
   if (typeof window === "undefined") return padroes();
   try {
     const bruto = window.localStorage.getItem(CHAVE);
-    if (!bruto) return padroes();
-    return sanear(JSON.parse(bruto));
-  } catch {
+    if (!bruto) {
+      registrar("sistema", "primeira visita: usando a configuração padrão");
+      return padroes();
+    }
+    const p = sanear(JSON.parse(bruto));
+    registrar("sistema", "configuração restaurada do navegador", [
+      `base ${p.base} · modo ${p.modo}`,
+      `${p.ativos.length} ativo(s), ${p.marcados.length} série(s) marcada(s)`,
+      `${p.estrategiasUsuario.length} estratégia(s) sua(s)`,
+      `período ${p.dataInicio} → ${p.dataFim}`,
+    ]);
+    return p;
+  } catch (e) {
+    // Conteúdo corrompido ou de uma versão antiga: o app abre nos padrões em
+    // vez de quebrar, mas o log guarda que isso aconteceu.
+    avisarProblema("sistema", "configuração salva ilegível — voltando ao padrão", [
+      e instanceof Error ? e.message : String(e),
+    ]);
     return padroes();
   }
 }
@@ -139,17 +155,13 @@ export function salvar(p: Preferencias) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(CHAVE, JSON.stringify(p));
-  } catch {
+  } catch (e) {
     // Navegação privada ou cota estourada: a sessão continua funcionando,
     // só não sobrevive ao recarregamento.
+    avisarProblema("sistema", "não consegui salvar a configuração", [
+      e instanceof Error ? e.message : String(e),
+      "a sessão continua, mas não sobrevive ao recarregamento",
+    ]);
   }
 }
 
-export function limpar() {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(CHAVE);
-  } catch {
-    /* nada a fazer */
-  }
-}

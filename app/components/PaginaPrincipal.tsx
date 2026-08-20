@@ -20,7 +20,14 @@ import {
   carregar as carregarPrefs, salvar as salvarPrefs, padroes,
   type Preferencias, type EstrategiaUsuario,
 } from "../lib/preferencias";
-import { cronometrar, anotar } from "../lib/diagnostico";
+import {
+  cronometrar,
+  anotar,
+  registrar,
+  registrarErro,
+  avisarProblema,
+  ligarCapturadores,
+} from "../lib/diagnostico";
 
 import Cabecalho from "./Cabecalho";
 import PainelConfiguracoes from "./PainelConfiguracoes";
@@ -80,13 +87,20 @@ function codigosEmbutidos(modo: "aportes" | "rentabilidade"): Record<string, str
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function campo(item: any, nome: string) {
-  return item instanceof Map ? item.get(nome) : item?.[nome];
+/**
+ * Le um campo de algo que veio do Python.
+ *
+ * O Pyodide converte dict para Map quando as chaves nao sao todas string, e
+ * para objeto quando sao. Como isso depende do conteudo, os dois casos
+ * precisam ser aceitos.
+ */
+function campo(item: unknown, nome: string): unknown {
+  if (item instanceof Map) return item.get(nome);
+  if (item && typeof item === "object") return (item as Record<string, unknown>)[nome];
+  return undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function paraMapa(bruto: any): Record<string, number> {
+function paraMapa(bruto: unknown): Record<string, number> {
   const saida: Record<string, number> = {};
   if (bruto instanceof Map) {
     bruto.forEach((v: unknown, k: unknown) => { saida[String(k)] = Number(v); });
@@ -102,7 +116,6 @@ export interface AlocacaoMes {
   riscoAlvo: Record<string, number>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 /** O Python devolve uma lista de dicts; aqui ela vira o formato do gráfico. */
 function normalizarRisco(bruto: unknown): PontoRisco[] {
   if (!Array.isArray(bruto)) return [];
@@ -114,11 +127,10 @@ function normalizarRisco(bruto: unknown): PontoRisco[] {
     .filter((p) => p.data && Number.isFinite(p.risco));
 }
 
-function normalizarAlocacao(raw: any): AlocacaoMes[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((item: any) => ({
+function normalizarAlocacao(bruto: unknown): AlocacaoMes[] {
+  if (!Array.isArray(bruto)) return [];
+  return bruto
+    .map((item: unknown) => ({
       data: String(campo(item, "data") ?? ""),
       pesos: paraMapa(campo(item, "pesos")),
       riscoAlvo: paraMapa(campo(item, "risco_alvo")),
@@ -129,6 +141,12 @@ function normalizarAlocacao(raw: any): AlocacaoMes[] {
 export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, status }: Props) {
   const [painelAberto, setPainelAberto] = useState(false);
   const [lateralAberta, setLateralAberta] = useState(false);
+
+  // Retracao da lateral no desktop. E outra coisa que `lateralAberta`, que
+  // controla a gaveta do celular: aqui a lateral existe e some para dar largura
+  // ao grafico. Fica em estado local de proposito — voltar ao site com a
+  // configuracao escondida deixaria a pessoa sem saber por onde comecar.
+  const [lateralRecolhida, setLateralRecolhida] = useState(false);
 
   // Base montada a partir de um arquivo do usuario. Vive so nesta aba: os
   // dados nunca saem da maquina dele, entao nao ha o que persistir.
@@ -142,6 +160,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
   const hidratado = useRef(false);
 
   useEffect(() => {
+    ligarCapturadores();
     setPrefs(carregarPrefs());
     hidratado.current = true;
   }, []);
@@ -150,7 +169,39 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
     if (hidratado.current) salvarPrefs(prefs);
   }, [prefs]);
 
+  /**
+   * Descreve uma mudança de preferência em uma linha.
+   *
+   * Para lista, o que interessa é a diferença — dizer "ativos: 8 itens" não
+   * ajuda ninguém a reconstruir o que a pessoa fez. Para o resto, o de-para.
+   */
+  function descrever(chave: string, antes: unknown, depois: unknown): string | null {
+    if (Array.isArray(antes) && Array.isArray(depois)) {
+      const entrou = depois.filter((x) => !antes.includes(x));
+      const saiu = antes.filter((x) => !depois.includes(x));
+      if (!entrou.length && !saiu.length) return null;
+      const partes: string[] = [];
+      if (entrou.length) partes.push(`+ ${entrou.join(", ")}`);
+      if (saiu.length) partes.push(`− ${saiu.join(", ")}`);
+      return `${chave}: ${partes.join("  ")}  (agora ${depois.length})`;
+    }
+    if (typeof antes === "object" || typeof depois === "object") {
+      return `${chave} alterado`;
+    }
+    if (antes === depois) return null;
+    return `${chave}: ${String(antes)} → ${String(depois)}`;
+  }
+
   function mudar<K extends keyof Preferencias>(chave: K, valor: Preferencias[K]) {
+    // O registro fica FORA do atualizador de estado. Dentro dele seria um
+    // efeito colateral numa função que o React pode chamar mais de uma vez —
+    // e chama, em desenvolvimento: cada ação aparecia duplicada no log.
+    //
+    // Ler `prefs` da closure é correto aqui porque `mudar` só é chamado de
+    // manipuladores de evento, onde o valor do render atual é o valor vigente.
+    const linha = descrever(String(chave), prefs[chave], valor);
+    if (linha) registrar("acao", linha);
+
     setPrefs((p) => ({ ...p, [chave]: valor }));
   }
 
@@ -201,6 +252,17 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         ? alvo.inicioMinimo
         : atual.dataInicio;
 
+      const perdidos = atual.ativos.filter((t) => !permitidos.has(t));
+      registrar("dados", `base trocada para ${alvo.titulo}`, [
+        `${nova.length} ativo(s) disponíveis`,
+        perdidos.length
+          ? `${perdidos.length} ativo(s) não existem nesta base e saíram: ${perdidos.join(", ")}`
+          : "todos os ativos escolhidos continuam válidos",
+        inicio !== atual.dataInicio
+          ? `início ajustado de ${atual.dataInicio} para ${inicio} (piso da base)`
+          : `período mantido em ${atual.dataInicio}`,
+      ]);
+
       return { ...atual, base: id, ativos: sobreviventes, dataInicio: inicio };
     });
     setErroSimulacao(null);
@@ -209,16 +271,34 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
   /** Le o arquivo do usuario e deixa o Python conferir antes de adotar. */
   async function subirBasePropria(arquivo: File) {
     setLaudoBase(null);
+    const fechar = cronometrar("dados", `conferência de ${arquivo.name}`);
+    registrar("acao", "arquivo de cotações escolhido", [
+      arquivo.name,
+      `${(arquivo.size / 1024).toFixed(0)} KB`,
+      arquivo.type || "tipo não informado",
+    ]);
     try {
       const bytes = await arquivo.arrayBuffer();
       const laudo = await usarBasePropria(arquivo.name, bytes);
       setLaudoBase(laudo);
+      fechar([laudo.ok ? "aceito" : "recusado"]);
+      if (!laudo.ok) {
+        avisarProblema("dados", "arquivo recusado na conferência", [laudo.erro ?? "sem motivo"]);
+      } else {
+        registrar("dados", "base do usuário adotada", [
+          `${laudo.tickers?.length ?? 0} ativo(s), ${laudo.pregoes ?? 0} pregão(ões)`,
+          `${laudo.inicio} → ${laudo.fim}`,
+          ...(laudo.avisos ?? []),
+        ]);
+      }
       if (laudo.ok && laudo.tickers?.length) {
         setMinhaBase({ titulo: arquivo.name, tickers: laudo.tickers });
         setPrefs((atual) => ({ ...atual, base: ID_BASE_PROPRIA, ativos: [] }));
         setErroSimulacao(null);
       }
     } catch (e) {
+      fechar(["falhou"]);
+      registrarErro("dados", `não consegui ler ${arquivo.name}`, e);
       setLaudoBase({ ok: false, erro: e instanceof Error ? e.message : String(e) });
     }
   }
@@ -340,6 +420,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
   }
 
   function removerEstrategia(id: string) {
+    registrar("acao", "estratégia do usuário apagada", [id]);
     setPrefs((p) => ({
       ...p,
       estrategiasUsuario: p.estrategiasUsuario.filter((e) => e.id !== id),
@@ -368,12 +449,14 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
   async function simular() {
     if (!pythonPronto || simulando) return;
 
-    if (marcados.length === 0) {
+    if (aRodar.length === 0) {
       setErroSimulacao("Escolha ao menos uma estratégia ou benchmark.");
+      avisarProblema("acao", "simulação recusada: nenhuma série marcada");
       return;
     }
-    if (marcados.some(precisaDeAtivos) && prefs.ativos.length === 0) {
+    if (aRodar.some(precisaDeAtivos) && prefs.ativos.length === 0) {
       setErroSimulacao("Escolha ao menos um ativo para as estratégias de carteira.");
+      avisarProblema("acao", "simulação recusada: nenhum ativo escolhido");
       return;
     }
 
@@ -383,10 +466,11 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
     const impedimento = motivoPeriodoInvalido(base, prefs.dataInicio);
     if (impedimento) {
       setErroSimulacao(impedimento);
+      avisarProblema("acao", "simulação recusada: período fora do piso da base", [impedimento]);
       return;
     }
 
-    if (marcados.some(precisaDeAtivos) && ativosSemHistorico.length) {
+    if (aRodar.some(precisaDeAtivos) && ativosSemHistorico.length) {
       const quais = ativosSemHistorico
         .map((a) => `${a.ticker} (desde ${dataBR(a.estreia)})`)
         .join(", ");
@@ -395,6 +479,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         + "Um ativo sem histórico zera a estratégia inteira, então remova-o ou "
         + "comece o período depois da estreia dele."
       );
+      avisarProblema("acao", "simulação recusada: ativo sem histórico na janela", [quais]);
       return;
     }
 
@@ -407,11 +492,25 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
       return saida;
     })();
 
+    registrar("acao", "simular", [
+      `${aRodar.length} série(s): ${aRodar.map((id) => nomeDaEstrategia(id, lista)).join(", ")}`,
+      `base ${base.titulo} · ${prefs.ativos.length} ativo(s)`,
+      `${prefs.dataInicio} → ${prefs.dataFim}`,
+    ]);
+
     setErroSimulacao(null);
     setInicioSimulacao(Date.now());
     setSimulando(true);
     setLateralAberta(false);
-    setStatusEstrategias(Object.fromEntries(marcados.map((id) => [id, "fila" as EstadoEstrategia])));
+    // Simulou: a atenção vai para o resultado, e a configuração sai da frente.
+    // Só no desktop — no celular a lateral já é gaveta e acabou de se fechar
+    // sozinha; recolher também deixaria o estado ligado sem nada na tela
+    // indicando isso, e a lateral apareceria escondida ao voltar para a tela
+    // grande.
+    if (typeof window !== "undefined" && window.innerWidth > 900) {
+      setLateralRecolhida(true);
+    }
+    setStatusEstrategias(Object.fromEntries(aRodar.map((id) => [id, "fila" as EstadoEstrategia])));
 
     const variaveis = {
       tickers: prefs.ativos,
@@ -427,7 +526,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
       `base: ${base.titulo}`,
       `período: ${prefs.dataInicio} → ${prefs.dataFim}`,
       `ativos (${prefs.ativos.length}): ${prefs.ativos.join(", ") || "—"}`,
-      `séries: ${marcados.map((id) => nomeDaEstrategia(id, lista)).join(", ")}`,
+      `séries: ${aRodar.map((id) => nomeDaEstrategia(id, lista)).join(", ")}`,
       Object.keys(orcamentoRisco).length
         ? `orçamento de risco: ${Object.entries(orcamentoRisco).map(([a, v]) => `${a} ${(v * 100).toFixed(1)}%`).join(", ")}`
         : "orçamento de risco: igual para todos (1/n)",
@@ -438,7 +537,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
     const fecharTotal = cronometrar("interface", "simulação completa (clique → gráfico)");
 
     try {
-      for (const id of marcados) {
+      for (const id of aRodar) {
         const nome = nomeDaEstrategia(id, lista);
         marcarEstrategia(id, "rodando");
         const fecharSerie = cronometrar("interface", `↳ ${nome} (ida e volta)`);
@@ -456,11 +555,11 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
           fecharSerie();
           marcarEstrategia(id, "erro");
           falhas.push(`${nome}: ${e instanceof Error ? e.message : String(e)}`);
-          console.error("Erro na série " + id + ":", e);
+          registrarErro("execucao", `${nome} falhou`, e, [`id: ${id}`]);
         }
       }
 
-      if (marcados.includes("paridade") && novo.paridade) {
+      if (aRodar.includes("paridade") && novo.paridade) {
         try {
           const alocacao = normalizarAlocacao(await lerVariavelPython("alocacao_mensal"));
           setAlocacaoParidade(alocacao);
@@ -475,7 +574,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         setAlocacaoParidade([]);
       }
 
-      if (marcados.includes("ingenua") && novo.ingenua) {
+      if (aRodar.includes("ingenua") && novo.ingenua) {
         try {
           setRiscoIngenua(normalizarRisco(await lerVariavelPython("risco_mensal")));
         } catch (e) {
@@ -502,13 +601,28 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         anotar("interface", "desenho dos gráficos", performance.now() - tDesenho);
       }, 0);
     } finally {
-      fecharTotal([`${marcados.length} série(s)`, `${prefs.ativos.length} ativo(s)`]);
+      fecharTotal([`${aRodar.length} série(s)`, `${prefs.ativos.length} ativo(s)`]);
       setSimulando(false);
     }
   }
 
   const temResultado = Object.values(resultados).some((s) => s && s.length > 0);
   const seriesDoModo = doModo(modo, lista).map((e) => e.id);
+
+  /**
+   * O que de fato vai rodar.
+   *
+   * `marcados` guarda a escolha do usuario nos DOIS modos, para que trocar de
+   * aba e voltar nao perca nada. Mas nem toda estrategia existe nos dois: a
+   * Ingenua e a Menor Variancia so tem codigo em Rentabilidade. Sem este
+   * filtro, marcar uma delas e trocar para Patrimonio deixava um id marcado,
+   * invisivel na lateral e ainda assim executado — que era exatamente a
+   * mensagem "sem codigo — escreva a estrategia no editor" aparecendo do nada.
+   */
+  const aRodar = useMemo(
+    () => marcados.filter((id) => seriesDoModo.includes(id)),
+    [marcados, seriesDoModo],
+  );
 
   return (
     <div className="app">
@@ -536,12 +650,21 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
       <PainelDiagnostico />
 
       <div className="corpo">
-        <aside className={"lateral" + (lateralAberta ? " lateral--aberta" : "")}>
+        <aside
+          className={
+            "lateral"
+            + (lateralAberta ? " lateral--aberta" : "")
+            + (lateralRecolhida ? " lateral--recolhida" : "")
+          }
+          /* Recolhida, a lateral tem largura zero mas continua no fluxo: sem
+             `inert` os onze campos dentro dela seguiriam recebendo Tab,
+             invisíveis. É o mesmo furo que a gaveta do celular já teve. */
+          inert={lateralRecolhida}
+        >
           <PainelConfiguracoes
             tickers={tickers}
             base={base}
             temBasePropria={!!minhaBase}
-            tituloBasePropria={minhaBase?.titulo ?? null}
             laudoBase={laudoBase}
             onTrocarBase={trocarBase}
             onSubirBase={subirBasePropria}
@@ -560,11 +683,26 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
           />
         </aside>
 
+        {/* Puxador da lateral. Mora na costura entre os dois painéis e só
+            aparece quando o ponteiro chega perto — a faixa invisível ao redor
+            é o que dá área de alvo sem ocupar espaço visual. */}
+        <div className={"puxador-zona" + (lateralRecolhida ? " puxador-zona--recolhida" : "")}>
+          <button
+            className="puxador"
+            onClick={() => setLateralRecolhida((v) => !v)}
+            aria-expanded={!lateralRecolhida}
+            aria-label={lateralRecolhida ? "Mostrar a configuração" : "Esconder a configuração"}
+            title={lateralRecolhida ? "Mostrar a configuração" : "Esconder a configuração"}
+          >
+            <Icone nome={lateralRecolhida ? "expandirLateral" : "recolherLateral"} tamanho={16} />
+          </button>
+        </div>
+
         <main className="resultados">
           <StatusSimulacao
             key={inicioSimulacao ?? "sem-simulacao"}
             simulando={simulando}
-            marcados={marcados}
+            marcados={aRodar}
             lista={lista}
             status={statusEstrategias}
             erro={erroSimulacao}
@@ -623,11 +761,11 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
 
               <PainelMetricas series={seriesDoModo.map((id) => lista.find((e) => e.id === id)!).filter(Boolean)} dados={resultados} />
 
-              {marcados.includes("paridade") && alocacaoParidade.length > 0 && (
+              {aRodar.includes("paridade") && alocacaoParidade.length > 0 && (
                 <GraficosParidade alocacao={alocacaoParidade} />
               )}
 
-              {marcados.includes("ingenua") && riscoIngenua.length > 1 && (
+              {aRodar.includes("ingenua") && riscoIngenua.length > 1 && (
                 <GraficoRisco risco={riscoIngenua} />
               )}
             </>

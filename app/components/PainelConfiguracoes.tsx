@@ -16,7 +16,6 @@ interface Props {
   /** Base de ativos selecionada agora. */
   base: BaseAtivos;
   temBasePropria: boolean;
-  tituloBasePropria: string | null;
   laudoBase: LaudoBase | null;
   onTrocarBase: (id: string) => void;
   onSubirBase: (arquivo: File) => Promise<void>;
@@ -42,7 +41,7 @@ function formatarBR(iso: string): string {
 }
 
 export default function PainelConfiguracoes({
-  tickers, base, temBasePropria, tituloBasePropria, laudoBase,
+  tickers, base, temBasePropria, laudoBase,
   onTrocarBase, onSubirBase, ativosSemHistorico,
   lista, prefs, mudar, tickersSemDados,
   onSimular, onCriarEstrategia, onDuplicar, onAbrirEditor,
@@ -93,7 +92,6 @@ export default function PainelConfiguracoes({
 
   const estrategias = doGrupo("estrategia", prefs.modo, lista);
   const benchmarks = doGrupo("benchmark", prefs.modo, lista);
-  const precisaAtivos = prefs.marcados.some((id) => estrategias.some((e) => e.id === id));
 
   // Por que o periodo escolhido nao serve para esta base, se for o caso.
   const impedimento = motivoPeriodoInvalido(base, prefs.dataInicio);
@@ -313,12 +311,6 @@ export default function PainelConfiguracoes({
             </button>
           ))}
         </div>
-
-        <p className="dica" style={{ marginBottom: "10px" }}>
-          {base.id === ID_BASE_PROPRIA && tituloBasePropria
-            ? `${tituloBasePropria} — ${tickers.length} ativos, lidos no seu navegador.`
-            : base.descricao}
-        </p>
 
         {ativosSemHistorico.length > 0 && (
           <div className="aviso aviso--atencao" style={{ marginBottom: "10px" }}>
@@ -540,11 +532,6 @@ export default function PainelConfiguracoes({
             </span>
           </button>
 
-          <p className="dica">
-            Uma coluna <b>Data</b> (dd/mm/aaaa) e depois uma coluna por ativo,
-            com o codigo no cabecalho.
-          </p>
-
           {laudoBase && !laudoBase.ok && (
             <div className="aviso aviso--erro" style={{ marginTop: "8px" }}>
               <span className="aviso__icone"><Icone nome="alerta" tamanho={15} /></span>
@@ -569,12 +556,6 @@ export default function PainelConfiguracoes({
           )}
         </div>
 
-        {podeSimular && precisaAtivos && prefs.ativos.length === 0 && (
-          <p className="dica com-icone" style={{ justifyContent: "center" }}>
-            <Icone nome="info" tamanho={13} />
-            Escolha ao menos um ativo
-          </p>
-        )}
       </div>
     </>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { doGrupo, type MetaEstrategia } from "../lib/estrategias-meta";
 import Icone from "./Icone";
+import EditorPython from "./EditorPython";
 
 interface Props {
   aberto: boolean;
@@ -131,12 +132,11 @@ export default function PainelEditores({
                   </div>
                 )}
 
-                <textarea
-                  value={codigos[e.id] ?? ""}
-                  onChange={(ev) => e.doUsuario && editarCodigo(e.id, ev.target.value)}
-                  readOnly={!e.doUsuario}
-                  spellCheck={false}
-                  className={"editor__codigo" + (e.doUsuario ? "" : " editor__codigo--leitura")}
+                <EditorPython
+                  titulo={e.titulo}
+                  codigo={codigos[e.id] ?? ""}
+                  soLeitura={!e.doUsuario}
+                  onMudar={e.doUsuario ? (texto) => editarCodigo(e.id, texto) : undefined}
                 />
               </div>
             )}

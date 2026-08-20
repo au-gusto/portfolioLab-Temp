@@ -19,7 +19,7 @@
  *
  * Protocolo (página -> worker):
  *   { tipo: "iniciar" }
- *   { tipo: "executar", id, codigo, variaveis, bruto }
+ *   { tipo: "executar", id, codigo, variaveis, perfilar, base }
  */
 
 const VERSAO_PYODIDE = "0.29.3";
@@ -370,7 +370,7 @@ _perfil_texto = [
 _saida_perfil
 `;
 
-async function executar({ id, codigo, variaveis, bruto, perfilar, base }) {
+async function executar({ id, codigo, variaveis, perfilar, base }) {
   const t0 = performance.now();
 
   // A base certa tem que estar montada antes da estrategia rodar: e dela que
@@ -417,7 +417,6 @@ async function executar({ id, codigo, variaveis, bruto, perfilar, base }) {
     perfil,
   });
 
-  if (bruto) return convertido;
   if (!Array.isArray(convertido)) return [];
   return convertido.map((item) => ({
     data: campo(item, "data"),
@@ -641,18 +640,6 @@ self.onmessage = async (evento) => {
         bytesPorBase.delete("propria");
       }
       self.postMessage({ tipo: "resultado", id: msg.id, dados: laudo });
-    } catch (erro) {
-      self.postMessage({ tipo: "erro", id: msg.id, mensagem: String(erro?.message || erro) });
-    }
-    return;
-  }
-
-  // Pre-carrega uma base sem simular, para a troca de aba nao travar no clique
-  // seguinte.
-  if (msg.tipo === "trocarBase") {
-    try {
-      await garantirBase(msg.base.id, msg.base.arquivo);
-      self.postMessage({ tipo: "resultado", id: msg.id, dados: { ok: true } });
     } catch (erro) {
       self.postMessage({ tipo: "erro", id: msg.id, mensagem: String(erro?.message || erro) });
     }
