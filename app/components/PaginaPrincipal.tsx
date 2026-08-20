@@ -120,10 +120,13 @@ export interface AlocacaoMes {
 function normalizarRisco(bruto: unknown): PontoRisco[] {
   if (!Array.isArray(bruto)) return [];
   return bruto
-    .map((p) => {
-      const o = p as Record<string, unknown>;
-      return { data: String(o?.data ?? ""), risco: Number(o?.risco) };
-    })
+    // `campo` e não `p.data`: o Pyodide entrega dict como Map quando as chaves
+    // não são todas string, e ler a propriedade direto devolvia undefined —
+    // o gráfico de risco simplesmente não aparecia, sem erro nenhum.
+    .map((p) => ({
+      data: String(campo(p, "data") ?? ""),
+      risco: Number(campo(p, "risco")),
+    }))
     .filter((p) => p.data && Number.isFinite(p.risco));
 }
 

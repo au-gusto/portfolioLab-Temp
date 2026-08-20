@@ -15,11 +15,11 @@
 *.tsbuildinfo
 
 # ── Segredos ─────────────────────────────────────────────────────────────────
-# Chaves do Supabase e afins. NUNCA versionar: uma vez no histórico do git,
-# só some reescrevendo a história do repositório inteiro.
+# O app não precisa de nenhum segredo hoje — não há banco nem API com chave.
+# A regra fica de pé mesmo assim: uma chave commitada por engano só some
+# reescrevendo a história do repositório inteiro.
 .env
 .env.*
-!.env.example
 *.pem
 *.key
 *.p12

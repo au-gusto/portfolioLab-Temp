@@ -167,8 +167,11 @@ img, video { max-width: 100%; height: auto; }
   --brilho-acao: 0 6px 18px rgba(5, 150, 105, 0.30);
   --brilho-acao-forte: 0 8px 26px rgba(5, 150, 105, 0.42);
 
-  --positivo: #059669;
-  --negativo: #DC2626;
+  /* Um tom abaixo do que a paleta pediria: estes dois viram TEXTO na tabela de
+     risco, e #059669 sobre branco dá 3,77 de contraste — abaixo do mínimo de
+     4,5 para texto normal. Medido, não estimado. */
+  --positivo: #047857;
+  --negativo: #B91C1C;
   --atencao: #B45309;
   --info: #0284C7;
 
