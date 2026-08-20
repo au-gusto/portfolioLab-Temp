@@ -1,5 +1,5 @@
 {
-  "atualizadoEm": "2026-08-20T12:26:42.292Z",
+  "atualizadoEm": "2026-08-20T12:27:53.184Z",
   "ativos": {
     "ultimoPregao": "2026-08-19",
     "tickers": 87
@@ -11,7 +11,7 @@
     "ultimoPregao": "2026-08-19"
   },
   "indicesMensais": {
-    "ultimoMes": null
+    "ultimoMes": "2026-07"
   },
   "tickersSemDados": [
     {
@@ -35,15 +35,15 @@
       "ultimoPregaoReal": "2026-08-19"
     },
     {
+      "ticker": "ELET6",
+      "ultimoPregaoReal": "2026-08-19"
+    },
+    {
       "ticker": "ELET3",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
       "ticker": "EMBR3",
-      "ultimoPregaoReal": "2026-08-19"
-    },
-    {
-      "ticker": "ELET6",
       "ultimoPregaoReal": "2026-08-19"
     },
     {
