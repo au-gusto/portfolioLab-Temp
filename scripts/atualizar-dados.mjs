@@ -69,6 +69,19 @@ function dataISOdeBR(br) {
   return `${a}-${m}-${d}`;
 }
 
+/**
+ * Limite superior das buscas no Yahoo: amanhã.
+ *
+ * `period2` é exclusivo, e a API recusa `period1 === period2`. Usando "hoje"
+ * como teto, no dia em que o histórico já estava em dia o script quebrava —
+ * era exatamente o caso da primeira execução da Action.
+ */
+function amanha() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // ─── Ativos ───────────────────────────────────────────────────────────────────
 
 async function atualizarAtivos() {
@@ -90,10 +103,10 @@ async function atualizarAtivos() {
   const desde = new Date(ultimaData);
   desde.setDate(desde.getDate() + 1);
   const inicio = desde.toISOString().slice(0, 10);
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = amanha();
 
   console.log(`Ativos: historico vai ate ${ultimaData} (${linhas.length - 1} pregoes, ${tickers.length} tickers)`);
-  if (inicio > hoje) {
+  if (inicio >= hoje) {
     console.log("  ja esta atualizado.");
     return { novos: 0, ultimaData, tickers: tickers.length, falhos: [] };
   }
@@ -222,10 +235,10 @@ async function atualizarIbov() {
   const desde = new Date(ultimaISO);
   if (!novoArquivo) desde.setDate(desde.getDate() + 1);
   const inicio = desde.toISOString().slice(0, 10);
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = amanha();
 
   console.log(`IBOV: historico vai ate ${ultimaISO}`);
-  if (!novoArquivo && inicio > hoje) {
+  if (!novoArquivo && inicio >= hoje) {
     console.log("  ja esta atualizado.");
     return ultimaISO;
   }
