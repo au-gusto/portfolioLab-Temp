@@ -1236,3 +1236,172 @@ input[type="checkbox"] { accent-color: var(--primaria); }
   .faixa-series { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
   .serie-card__valor { font-size: 15px; }
 }
+
+
+/* ══ AÇÕES PEQUENAS (duplicar, apagar, criar) ════════════════════════════════ */
+
+.acao-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.acao-mini:hover {
+  color: var(--texto);
+  background: var(--fundo-elevado);
+  border-color: var(--borda);
+}
+.acao-mini:focus-visible { outline: 2px solid var(--primaria); outline-offset: 1px; }
+
+.acao-mini--destaque { color: var(--primaria); border-color: var(--borda); }
+.acao-mini--destaque:hover { background: var(--primaria); color: var(--sobre-primaria); }
+
+.acao-mini--perigo:hover { color: var(--negativo); background: var(--negativo-fundo); border-color: var(--negativo); }
+
+/* A linha de estratégia agora tem rótulo clicável + ações à direita. */
+.estrategia__alvo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.estrategia__acoes {
+  display: inline-flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.estrategia:hover .estrategia__acoes,
+.estrategia:focus-within .estrategia__acoes { opacity: 1; }
+
+/* No toque não existe hover: as ações ficam sempre visíveis. */
+@media (hover: none) {
+  .estrategia__acoes { opacity: 1; }
+}
+
+/* ══ GAVETA DE CÓDIGO ════════════════════════════════════════════════════════ */
+
+.gaveta-codigo {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(620px, 100vw);
+  background: var(--fundo-card);
+  border-left: 1px solid var(--borda);
+  padding: 18px;
+  z-index: 200;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--sombra);
+}
+
+.gaveta-codigo__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.gaveta-codigo__titulo { font-size: 14px; font-weight: 700; margin: 0; }
+
+.editor {
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  overflow: hidden;
+}
+
+.editor__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+  background: var(--fundo);
+}
+
+.editor__abrir {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--texto);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+}
+.editor__nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor__acoes { display: inline-flex; gap: 2px; }
+
+.etiqueta {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  border: 1px solid var(--borda);
+  border-radius: 3px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+.editor__corpo {
+  padding: 10px;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor__titulo { font-weight: 600; }
+
+.editor__codigo {
+  width: 100%;
+  min-height: 340px;
+  background: var(--fundo);
+  color: var(--texto);
+  border: 1px solid var(--borda-suave);
+  border-radius: var(--raio-p);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+  tab-size: 4;
+}
+.editor__codigo:focus { border-color: var(--primaria); }
+
+/* Só leitura fica visivelmente diferente de editável — sem isso o usuário
+   digita e não entende por que nada acontece. */
+.editor__codigo--leitura {
+  color: var(--texto-suave);
+  background: var(--fundo-elevado);
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .gaveta-codigo { width: 100%; padding: 14px; }
+  .editor__codigo { min-height: 260px; }
+}

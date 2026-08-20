@@ -2,28 +2,22 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { doGrupo, type MetaEstrategia } from "../lib/estrategias-meta";
+import type { Preferencias } from "../lib/preferencias";
 import type { TickerSemDados } from "../lib/fonte-dados";
 import Icone from "./Icone";
 import Ajuda from "./Ajuda";
 
-export interface ConfigSimulacao {
-  tickers: string[];
-  dataInicio: string;
-  dataFim: string;
-  aporteInicial: number;
-  aportesMensal: number;
-  /** Fração do risco por ativo (soma 1). Vazio = paridade clássica, 1/n. */
-  orcamentoRisco: Record<string, number>;
-}
-
 interface Props {
-  modo: "aportes" | "rentabilidade";
-  setModo: (valor: "aportes" | "rentabilidade") => void;
   tickers: string[];
-  marcados: string[];
-  setMarcados: (valor: string[]) => void;
+  /** Catálogo já com as estratégias que o usuário escreveu. */
+  lista: MetaEstrategia[];
+  prefs: Preferencias;
+  mudar: <K extends keyof Preferencias>(chave: K, valor: Preferencias[K]) => void;
   tickersSemDados: TickerSemDados[];
-  onSimular: (config: ConfigSimulacao) => Promise<void>;
+  onSimular: () => Promise<void>;
+  onCriarEstrategia: () => void;
+  onDuplicar: (base: MetaEstrategia) => void;
+  onAbrirEditor: () => void;
   pythonPronto: boolean;
   pctCarregamento: number;
   simulando: boolean;
@@ -35,21 +29,13 @@ function formatarBR(iso: string): string {
 }
 
 export default function PainelConfiguracoes({
-  tickers, marcados, setMarcados, tickersSemDados,
-  onSimular, modo, setModo, pythonPronto, pctCarregamento, simulando,
+  tickers, lista, prefs, mudar, tickersSemDados,
+  onSimular, onCriarEstrategia, onDuplicar, onAbrirEditor,
+  pythonPronto, pctCarregamento, simulando,
 }: Props) {
-  const [aporteInicial, setAporteInicial] = useState(1000);
-  const [aportesMensal, setAporteMensal] = useState(400);
-  const [selecionados, setSelecionados] = useState<string[]>([]);
-  const [dataInicio, setDataInicio] = useState("2019-01-02");
-  const [dataFim, setDataFim] = useState("2025-06-10");
   const [filtro, setFiltro] = useState("");
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
   const [verTodos, setVerTodos] = useState(false);
-
-  /** Orçamento de risco em pontos (não %): o normalizador cuida da soma. */
-  const [orcamento, setOrcamento] = useState<Record<string, number>>({});
-  const [usarOrcamento, setUsarOrcamento] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const buscaRef = useRef<HTMLDivElement>(null);
@@ -59,12 +45,10 @@ export default function PainelConfiguracoes({
     [tickersSemDados]
   );
 
-  // A forma funcional é obrigatória: sem ela, dois cliques no mesmo instante
-  // partem do mesmo array e um sobrescreve o outro.
   function alternarTicker(ticker: string) {
-    setSelecionados((atual) =>
-      atual.includes(ticker) ? atual.filter((t) => t !== ticker) : [...atual, ticker]
-    );
+    mudar("ativos", prefs.ativos.includes(ticker)
+      ? prefs.ativos.filter((t) => t !== ticker)
+      : [...prefs.ativos, ticker]);
   }
 
   useEffect(() => {
@@ -90,56 +74,63 @@ export default function PainelConfiguracoes({
     inputRef.current?.focus();
   }
 
-  const estrategias = doGrupo("estrategia", modo);
-  const benchmarks = doGrupo("benchmark", modo);
-  const precisaAtivos = marcados.some((id) =>
-    estrategias.some((e) => e.id === id)
-  );
-  const selecionadosMortos = selecionados.filter((t) => mortos.has(t));
+  const estrategias = doGrupo("estrategia", prefs.modo, lista);
+  const benchmarks = doGrupo("benchmark", prefs.modo, lista);
+  const precisaAtivos = prefs.marcados.some((id) => estrategias.some((e) => e.id === id));
+  const selecionadosMortos = prefs.ativos.filter((t) => mortos.has(t));
   const podeSimular = pythonPronto && !simulando;
 
-  /** Peso de cada ativo no orçamento; sem valor definido, vale 1 (igual). */
   function pontosDe(ticker: string): number {
-    return orcamento[ticker] ?? 1;
+    return prefs.orcamento[ticker] ?? 1;
   }
-  const totalPontos = selecionados.reduce((s, t) => s + pontosDe(t), 0);
+  const totalPontos = prefs.ativos.reduce((s, t) => s + pontosDe(t), 0);
 
-  function definirPontos(ticker: string, valor: number) {
-    setOrcamento((atual) => ({ ...atual, [ticker]: Math.max(0, valor) }));
-  }
-
-  function montarOrcamento(): Record<string, number> {
-    if (!usarOrcamento || selecionados.length === 0 || totalPontos <= 0) return {};
-    const saida: Record<string, number> = {};
-    selecionados.forEach((t) => { saida[t] = pontosDe(t) / totalPontos; });
-    return saida;
+  function alternarMarcado(id: string) {
+    mudar("marcados", prefs.marcados.includes(id)
+      ? prefs.marcados.filter((m) => m !== id)
+      : [...prefs.marcados, id]);
   }
 
-  function listaDeSeries(itens: MetaEstrategia[]) {
+  function listaDeSeries(itens: MetaEstrategia[], comAcoes: boolean) {
     return itens.map((e) => {
-      const marcada = marcados.includes(e.id);
+      const marcada = prefs.marcados.includes(e.id);
       return (
-        <label
-          key={e.id}
-          className={"estrategia" + (marcada ? " estrategia--marcada" : "")}
-          title={e.descricao}
-        >
-          <input
-            type="checkbox"
-            checked={marcada}
-            onChange={() =>
-              setMarcados(marcada ? marcados.filter((m) => m !== e.id) : [...marcados, e.id])
-            }
-          />
-          <span
-            className="estrategia__cor"
-            style={{
-              background: e.tracejado ? "transparent" : e.cor,
-              border: e.tracejado ? `2px dashed ${e.cor}` : "none",
-            }}
-          />
-          <span className="estrategia__nome">{e.titulo}</span>
-        </label>
+        <div key={e.id} className={"estrategia" + (marcada ? " estrategia--marcada" : "")}>
+          <label className="estrategia__alvo" title={e.descricao}>
+            <input type="checkbox" checked={marcada} onChange={() => alternarMarcado(e.id)} />
+            <span
+              className="estrategia__cor"
+              style={{
+                background: e.tracejado ? "transparent" : e.cor,
+                border: e.tracejado ? `2px dashed ${e.cor}` : "none",
+              }}
+            />
+            <span className="estrategia__nome">{e.titulo}</span>
+          </label>
+
+          {comAcoes && (
+            <span className="estrategia__acoes">
+              {e.doUsuario && (
+                <button
+                  className="acao-mini"
+                  onClick={onAbrirEditor}
+                  aria-label={`Editar o código de ${e.titulo}`}
+                  title="Editar código"
+                >
+                  <Icone nome="codigo" tamanho={13} />
+                </button>
+              )}
+              <button
+                className="acao-mini"
+                onClick={() => onDuplicar(e)}
+                aria-label={`Duplicar ${e.titulo}`}
+                title="Duplicar para editar"
+              >
+                <Icone nome="duplicar" tamanho={13} />
+              </button>
+            </span>
+          )}
+        </div>
       );
     });
   }
@@ -150,18 +141,18 @@ export default function PainelConfiguracoes({
       <div className="secao">
         <div className="abas" role="tablist">
           <button
-            role="tab" aria-selected={modo === "rentabilidade"}
-            className={"aba" + (modo === "rentabilidade" ? " aba--ativa" : "")}
-            onClick={() => setModo("rentabilidade")}
+            role="tab" aria-selected={prefs.modo === "rentabilidade"}
+            className={"aba" + (prefs.modo === "rentabilidade" ? " aba--ativa" : "")}
+            onClick={() => mudar("modo", "rentabilidade")}
             title="Retorno acumulado da cota, sem depender de quanto você aportou"
           >
             <Icone nome="tendencia" tamanho={15} />
             Rentabilidade
           </button>
           <button
-            role="tab" aria-selected={modo === "aportes"}
-            className={"aba" + (modo === "aportes" ? " aba--ativa" : "")}
-            onClick={() => setModo("aportes")}
+            role="tab" aria-selected={prefs.modo === "aportes"}
+            className={"aba" + (prefs.modo === "aportes" ? " aba--ativa" : "")}
+            onClick={() => mudar("modo", "aportes")}
             title="Evolução do patrimônio com aportes mensais"
           >
             <Icone nome="carteira" tamanho={15} />
@@ -179,25 +170,25 @@ export default function PainelConfiguracoes({
           </span>
           <Ajuda alinhar="direita">
             O rebalanceamento é mensal, então a simulação começa no primeiro dia 1º
-            depois de {formatarBR(dataInicio)}, e o último mês vai até a data de fim.
+            depois de {formatarBR(prefs.dataInicio)}, e o último mês vai até a data de fim.
           </Ajuda>
         </p>
         <div className="linha-2">
           <div>
             <label className="rotulo" htmlFor="dt-inicio">Início</label>
             <input id="dt-inicio" type="date" className="campo tabular"
-              value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              value={prefs.dataInicio} onChange={(e) => mudar("dataInicio", e.target.value)} />
           </div>
           <div>
             <label className="rotulo" htmlFor="dt-fim">Fim</label>
             <input id="dt-fim" type="date" className="campo tabular"
-              value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+              value={prefs.dataFim} onChange={(e) => mudar("dataFim", e.target.value)} />
           </div>
         </div>
       </div>
 
       {/* ── Aportes (só no modo Patrimônio) ──────────────────────────────── */}
-      {modo === "aportes" && (
+      {prefs.modo === "aportes" && (
         <div className="secao">
           <p className="secao__titulo">
             <span className="com-icone">
@@ -213,12 +204,14 @@ export default function PainelConfiguracoes({
             <div>
               <label className="rotulo" htmlFor="ap-ini">Inicial (R$)</label>
               <input id="ap-ini" type="number" min={0} className="campo tabular"
-                value={aporteInicial} onChange={(e) => setAporteInicial(Number(e.target.value))} />
+                value={prefs.aporteInicial}
+                onChange={(e) => mudar("aporteInicial", Number(e.target.value))} />
             </div>
             <div>
               <label className="rotulo" htmlFor="ap-mes">Mensal (R$)</label>
               <input id="ap-mes" type="number" min={0} className="campo tabular"
-                value={aportesMensal} onChange={(e) => setAporteMensal(Number(e.target.value))} />
+                value={prefs.aporteMensal}
+                onChange={(e) => mudar("aporteMensal", Number(e.target.value))} />
             </div>
           </div>
         </div>
@@ -231,12 +224,23 @@ export default function PainelConfiguracoes({
             <Icone nome="grafico" tamanho={13} />
             Estratégias
           </span>
-          <Ajuda alinhar="direita">
-            Alocam os ativos que você escolheu, rebalanceando todo mês com os
-            12 meses anteriores de histórico.
-          </Ajuda>
+          <span className="secao__acoes">
+            <button
+              className="acao-mini acao-mini--destaque"
+              onClick={onCriarEstrategia}
+              aria-label="Criar estratégia nova"
+              title="Criar estratégia nova"
+            >
+              <Icone nome="adicionar" tamanho={14} />
+            </button>
+            <Ajuda alinhar="direita">
+              As nossas não podem ser alteradas, mas o código está aberto no
+              editor. Para mudar alguma, use o botão de duplicar — a cópia é sua
+              e fica guardada neste navegador.
+            </Ajuda>
+          </span>
         </p>
-        {listaDeSeries(estrategias)}
+        {listaDeSeries(estrategias, true)}
       </div>
 
       {/* ── Benchmarks ───────────────────────────────────────────────────── */}
@@ -251,7 +255,7 @@ export default function PainelConfiguracoes({
             ideia ingênua de comprar no início do período e não mexer.
           </Ajuda>
         </p>
-        {listaDeSeries(benchmarks)}
+        {listaDeSeries(benchmarks, false)}
       </div>
 
       {/* ── Ativos ───────────────────────────────────────────────────────── */}
@@ -262,7 +266,7 @@ export default function PainelConfiguracoes({
             Ativos
           </span>
           <span className="secao__acoes">
-            <span className="tabular">{selecionados.length}</span>
+            <span className="tabular">{prefs.ativos.length}</span>
             <Ajuda alinhar="direita">
               Ativos com volatilidade anual abaixo de 13% são descartados pelo
               otimizador da Paridade, para manter a matriz de covariância bem
@@ -296,34 +300,33 @@ export default function PainelConfiguracoes({
                       </span>
                     )}
                   </span>
-                  <Icone nome={selecionados.includes(t) ? "fechar" : "adicionar"} tamanho={14} />
+                  <Icone nome={prefs.ativos.includes(t) ? "fechar" : "adicionar"} tamanho={14} />
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {selecionados.length === 0 ? (
+        {prefs.ativos.length === 0 ? (
           <div className="sem-itens">
             <Icone nome="busca" tamanho={20} />
             <span>Busque acima ou abra a lista completa</span>
           </div>
         ) : (
           <div className="lista-ativos">
-            {selecionados.map((t) => (
+            {prefs.ativos.map((t) => (
               <div key={t} className="ativo-linha">
                 <span className="ativo-linha__nome">{t}</span>
 
-                {/* Orçamento de risco: quanto do risco da carteira este ativo
-                    deve carregar. O campo só aparece quando ligado, para não
-                    poluir quem quer a paridade clássica. */}
-                {usarOrcamento && (
+                {prefs.usarOrcamento && (
                   <span className="orcamento">
                     <input
                       type="number" min={0} step={0.5}
                       className="orcamento__campo tabular"
                       value={pontosDe(t)}
-                      onChange={(e) => definirPontos(t, Number(e.target.value))}
+                      onChange={(e) =>
+                        mudar("orcamento", { ...prefs.orcamento, [t]: Math.max(0, Number(e.target.value)) })
+                      }
                       aria-label={`Peso de risco de ${t}`}
                     />
                     <span className="orcamento__pct tabular">
@@ -351,10 +354,10 @@ export default function PainelConfiguracoes({
           </div>
         )}
 
-        {selecionados.length > 0 && (
+        {prefs.ativos.length > 0 && (
           <label className="estrategia" style={{ marginBottom: "8px" }}>
-            <input type="checkbox" checked={usarOrcamento}
-              onChange={() => setUsarOrcamento((v) => !v)} />
+            <input type="checkbox" checked={prefs.usarOrcamento}
+              onChange={() => mudar("usarOrcamento", !prefs.usarOrcamento)} />
             <span className="estrategia__nome">Orçamento de risco</span>
             <Ajuda alinhar="direita">
               Em vez de todos os ativos contribuírem igualmente para o risco,
@@ -393,7 +396,7 @@ export default function PainelConfiguracoes({
                 key={t}
                 className={
                   "chip" +
-                  (selecionados.includes(t) ? " chip--ativo" : "") +
+                  (prefs.ativos.includes(t) ? " chip--ativo" : "") +
                   (mortos.has(t) ? " chip--morto" : "")
                 }
                 title={mortos.has(t) ? `Sem cotações desde ${formatarBR(mortos.get(t)!)}` : undefined}
@@ -408,17 +411,7 @@ export default function PainelConfiguracoes({
 
       {/* ── Ação ─────────────────────────────────────────────────────────── */}
       <div className="secao">
-        <button
-          className="botao-primario"
-          disabled={!podeSimular}
-          onClick={() =>
-            onSimular({
-              tickers: selecionados,
-              dataInicio, dataFim, aporteInicial, aportesMensal,
-              orcamentoRisco: montarOrcamento(),
-            })
-          }
-        >
+        <button className="botao-primario" disabled={!podeSimular} onClick={onSimular}>
           {simulando || !pythonPronto ? (
             <>
               <span className="girando"><Icone nome="carregando" tamanho={16} /></span>
@@ -431,7 +424,7 @@ export default function PainelConfiguracoes({
             </>
           )}
         </button>
-        {podeSimular && precisaAtivos && selecionados.length === 0 && (
+        {podeSimular && precisaAtivos && prefs.ativos.length === 0 && (
           <p className="dica com-icone" style={{ justifyContent: "center" }}>
             <Icone nome="info" tamanho={13} />
             Escolha ao menos um ativo

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 import {
   iniciarPyodide,
@@ -10,11 +10,18 @@ import {
   type EstadoCarregamento,
 } from "../lib/pyodideLoader";
 import type { StatusDados } from "../lib/fonte-dados";
-import { nomeDaEstrategia, precisaDeAtivos, doModo, type IdSerie } from "../lib/estrategias-meta";
+import {
+  catalogo, doModo, nomeDaEstrategia, precisaDeAtivos, CORES_USUARIO,
+  type MetaEstrategia,
+} from "../lib/estrategias-meta";
+import {
+  carregar as carregarPrefs, salvar as salvarPrefs, padroes,
+  type Preferencias, type EstrategiaUsuario,
+} from "../lib/preferencias";
 import { cronometrar, anotar } from "../lib/diagnostico";
 
 import Cabecalho from "./Cabecalho";
-import PainelConfiguracoes, { type ConfigSimulacao } from "./PainelConfiguracoes";
+import PainelConfiguracoes from "./PainelConfiguracoes";
 import PainelEditores from "./PainelEditores";
 import StatusPython from "./StatusPython";
 import Icone from "./Icone";
@@ -35,6 +42,7 @@ import {
   codigoIbov, codigoIpca, codigoPoupanca,
   codigoIbov_rentabilidade, codigoIpca_rentabilidade, codigoPoupanca_rentabilidade,
 } from "../estrategias/benchmarks";
+import { ESQUELETO_ESTRATEGIA } from "../estrategias/modelo";
 
 interface Props {
   tickers: string[];
@@ -42,11 +50,10 @@ interface Props {
 }
 
 export type Serie = { data: string; valor: number }[] | null;
-export type Resultados = Partial<Record<IdSerie, Serie>>;
+export type Resultados = Partial<Record<string, Serie>>;
 
-type Codigos = Record<IdSerie, string>;
-
-function codigosDoModo(modo: "aportes" | "rentabilidade"): Codigos {
+/** Código das séries embutidas. Elas são só leitura — o usuário duplica para mexer. */
+function codigosEmbutidos(modo: "aportes" | "rentabilidade"): Record<string, string> {
   const aportes = modo === "aportes";
   return {
     paridade: aportes ? codigoParidade : codigoParidade_rentabilidade,
@@ -97,25 +104,44 @@ function normalizarAlocacao(raw: any): AlocacaoMes[] {
 export default function PaginaPrincipal({ tickers, status }: Props) {
   const [painelAberto, setPainelAberto] = useState(false);
   const [lateralAberta, setLateralAberta] = useState(false);
-  const [modo, setModo] = useState<"aportes" | "rentabilidade">("rentabilidade");
 
-  const [codigos, setCodigos] = useState<Codigos>(() => codigosDoModo("rentabilidade"));
+  // O servidor não tem localStorage, então a primeira renderização usa os
+  // padrões e a preferência salva entra logo depois da hidratação. Ler no
+  // corpo do componente causaria divergência entre servidor e cliente.
+  const [prefs, setPrefs] = useState<Preferencias>(padroes);
+  const hidratado = useRef(false);
 
   useEffect(() => {
-    setCodigos(codigosDoModo(modo));
-    // Trocar de modo muda a métrica: os resultados antigos não valem mais.
-    setResultados({});
-    setAlocacaoParidade([]);
-    setStatusEstrategias({});
-    setErroSimulacao(null);
-    setAtivosUsados([]);
-  }, [modo]);
+    setPrefs(carregarPrefs());
+    hidratado.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (hidratado.current) salvarPrefs(prefs);
+  }, [prefs]);
+
+  function mudar<K extends keyof Preferencias>(chave: K, valor: Preferencias[K]) {
+    setPrefs((p) => ({ ...p, [chave]: valor }));
+  }
+
+  const { modo, marcados, estrategiasUsuario } = prefs;
+
+  /** Catálogo com as embutidas + as que o usuário escreveu. */
+  const lista = useMemo(() => catalogo(estrategiasUsuario), [estrategiasUsuario]);
+
+  /** Código de cada série, por modo. */
+  const codigos = useMemo(() => {
+    const mapa = codigosEmbutidos(modo);
+    estrategiasUsuario.forEach((e) => {
+      mapa[e.id] = modo === "aportes" ? e.codigoAportes : e.codigoRentabilidade;
+    });
+    return mapa;
+  }, [modo, estrategiasUsuario]);
 
   const [configSimulacao, setConfigSimulacao] = useState<{
     aporteInicial: number; aportesMensal: number; dataInicio: string; dataFim: string;
   } | null>(null);
 
-  const [marcados, setMarcados] = useState<string[]>(["paridade", "cdi", "ibov"]);
   const [resultados, setResultados] = useState<Resultados>({});
   const [alocacaoParidade, setAlocacaoParidade] = useState<AlocacaoMes[]>([]);
   const [ativosUsados, setAtivosUsados] = useState<string[]>([]);
@@ -125,11 +151,21 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
   const [statusEstrategias, setStatusEstrategias] = useState<Record<string, EstadoEstrategia>>({});
   const [erroSimulacao, setErroSimulacao] = useState<string | null>(null);
   const [inicioSimulacao, setInicioSimulacao] = useState<number | null>(null);
-  // Ctrl+Shift+P liga o profiler do Python. Desligado por padrão: ele
-  // instrumenta cada chamada e chega a dobrar o tempo de execução.
   const [perfilarPython, setPerfilarPython] = useState(false);
 
   const pythonPronto = carregamento?.fase === "pronto";
+
+  // Trocar de modo muda a métrica: os resultados antigos não valem mais.
+  const modoAnterior = useRef(modo);
+  useEffect(() => {
+    if (modoAnterior.current === modo) return;
+    modoAnterior.current = modo;
+    setResultados({});
+    setAlocacaoParidade([]);
+    setStatusEstrategias({});
+    setErroSimulacao(null);
+    setAtivosUsados([]);
+  }, [modo]);
 
   useEffect(() => {
     function atalho(e: KeyboardEvent) {
@@ -153,11 +189,73 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
     return parar;
   }, []);
 
-  /**
-   * Ativos que o otimizador descartou em TODOS os meses — quase sempre por
-   * caírem abaixo do limiar de 13% de volatilidade anual. Sem isso o usuário
-   * escolhia um ativo, ele sumia da carteira e nada na tela dizia por quê.
-   */
+  // ─── Estratégias do usuário ────────────────────────────────────────────────
+
+  function novoId() {
+    return `usuario-${Date.now()}`;
+  }
+
+  function proximaCor() {
+    return CORES_USUARIO[estrategiasUsuario.length % CORES_USUARIO.length];
+  }
+
+  function criarEstrategia(base?: MetaEstrategia) {
+    const id = novoId();
+    const codigoR = base ? (codigosEmbutidos("rentabilidade")[base.id]
+      ?? estrategiasUsuario.find((e) => e.id === base.id)?.codigoRentabilidade ?? "") : ESQUELETO_ESTRATEGIA;
+    const codigoA = base ? (codigosEmbutidos("aportes")[base.id]
+      ?? estrategiasUsuario.find((e) => e.id === base.id)?.codigoAportes ?? "") : ESQUELETO_ESTRATEGIA;
+
+    const nova: EstrategiaUsuario = {
+      id,
+      titulo: base ? `${base.titulo} (cópia)` : `Minha estratégia ${estrategiasUsuario.length + 1}`,
+      cor: proximaCor(),
+      codigoRentabilidade: codigoR || ESQUELETO_ESTRATEGIA,
+      codigoAportes: codigoA || ESQUELETO_ESTRATEGIA,
+      criadaEm: Date.now(),
+    };
+
+    setPrefs((p) => ({
+      ...p,
+      estrategiasUsuario: [...p.estrategiasUsuario, nova],
+      marcados: [...p.marcados, id],
+    }));
+    setPainelAberto(true);
+    anotar("interface", base ? `duplicou "${base.titulo}"` : "criou estratégia nova", 0);
+  }
+
+  function editarCodigo(id: string, codigo: string) {
+    setPrefs((p) => ({
+      ...p,
+      estrategiasUsuario: p.estrategiasUsuario.map((e) =>
+        e.id !== id ? e
+          : modo === "aportes" ? { ...e, codigoAportes: codigo } : { ...e, codigoRentabilidade: codigo }
+      ),
+    }));
+  }
+
+  function renomearEstrategia(id: string, titulo: string) {
+    setPrefs((p) => ({
+      ...p,
+      estrategiasUsuario: p.estrategiasUsuario.map((e) => (e.id === id ? { ...e, titulo } : e)),
+    }));
+  }
+
+  function removerEstrategia(id: string) {
+    setPrefs((p) => ({
+      ...p,
+      estrategiasUsuario: p.estrategiasUsuario.filter((e) => e.id !== id),
+      marcados: p.marcados.filter((m) => m !== id),
+    }));
+    setResultados((r) => {
+      const copia = { ...r };
+      delete copia[id];
+      return copia;
+    });
+  }
+
+  // ─── Simulação ─────────────────────────────────────────────────────────────
+
   const descartados = useMemo(() => {
     if (!alocacaoParidade.length || !ativosUsados.length) return [];
     return ativosUsados.filter((t) =>
@@ -169,40 +267,49 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
     setStatusEstrategias((anterior) => ({ ...anterior, [id]: estado }));
   }
 
-  async function simular(config: ConfigSimulacao) {
+  async function simular() {
     if (!pythonPronto || simulando) return;
 
     if (marcados.length === 0) {
       setErroSimulacao("Escolha ao menos uma estratégia ou benchmark.");
       return;
     }
-    if (marcados.some(precisaDeAtivos) && config.tickers.length === 0) {
+    if (marcados.some(precisaDeAtivos) && prefs.ativos.length === 0) {
       setErroSimulacao("Escolha ao menos um ativo para as estratégias de carteira.");
       return;
     }
 
+    const orcamentoRisco = (() => {
+      if (!prefs.usarOrcamento || prefs.ativos.length === 0) return {};
+      const total = prefs.ativos.reduce((s, t) => s + (prefs.orcamento[t] ?? 1), 0);
+      if (total <= 0) return {};
+      const saida: Record<string, number> = {};
+      prefs.ativos.forEach((t) => { saida[t] = (prefs.orcamento[t] ?? 1) / total; });
+      return saida;
+    })();
+
     setErroSimulacao(null);
     setInicioSimulacao(Date.now());
     setSimulando(true);
-    setLateralAberta(false);   // no celular, sai da gaveta e mostra o resultado
+    setLateralAberta(false);
     setStatusEstrategias(Object.fromEntries(marcados.map((id) => [id, "fila" as EstadoEstrategia])));
 
     const variaveis = {
-      tickers: config.tickers,
-      data_inicio: config.dataInicio,
-      data_fim: config.dataFim,
-      aporte_inicial: config.aporteInicial,
-      aporte_mensal: config.aportesMensal,
-      orcamento_risco: config.orcamentoRisco,
+      tickers: prefs.ativos,
+      data_inicio: prefs.dataInicio,
+      data_fim: prefs.dataFim,
+      aporte_inicial: prefs.aporteInicial,
+      aporte_mensal: prefs.aporteMensal,
+      orcamento_risco: orcamentoRisco,
       modo_retorno: "serie",
     };
 
     anotar("interface", "configuração da simulação", 0, [
-      `período: ${config.dataInicio} → ${config.dataFim}`,
-      `ativos (${config.tickers.length}): ${config.tickers.join(", ") || "—"}`,
-      `séries: ${marcados.map(nomeDaEstrategia).join(", ")}`,
-      Object.keys(config.orcamentoRisco).length
-        ? `orçamento de risco: ${Object.entries(config.orcamentoRisco).map(([a, v]) => `${a} ${(v * 100).toFixed(1)}%`).join(", ")}`
+      `período: ${prefs.dataInicio} → ${prefs.dataFim}`,
+      `ativos (${prefs.ativos.length}): ${prefs.ativos.join(", ") || "—"}`,
+      `séries: ${marcados.map((id) => nomeDaEstrategia(id, lista)).join(", ")}`,
+      Object.keys(orcamentoRisco).length
+        ? `orçamento de risco: ${Object.entries(orcamentoRisco).map(([a, v]) => `${a} ${(v * 100).toFixed(1)}%`).join(", ")}`
         : "orçamento de risco: igual para todos (1/n)",
     ]);
 
@@ -212,27 +319,24 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
 
     try {
       for (const id of marcados) {
+        const nome = nomeDaEstrategia(id, lista);
         marcarEstrategia(id, "rodando");
-        const fecharSerie = cronometrar("interface", `↳ ${nomeDaEstrategia(id)} (ida e volta)`);
+        const fecharSerie = cronometrar("interface", `↳ ${nome} (ida e volta)`);
         try {
-          const serie = await executarEstrategia(
-            codigos[id as IdSerie],
-            { ...variaveis, __nome: nomeDaEstrategia(id) },
-            perfilarPython
-          );
+          const codigo = codigos[id];
+          if (!codigo || !codigo.trim()) throw new Error("sem código — escreva a estratégia no editor");
+          const serie = await executarEstrategia(codigo, { ...variaveis, __nome: nome }, perfilarPython);
           fecharSerie();
-          novo[id as IdSerie] = serie;
+          novo[id] = serie;
           marcarEstrategia(id, serie.length > 0 ? "ok" : "vazio");
         } catch (e) {
           fecharSerie();
           marcarEstrategia(id, "erro");
-          falhas.push(`${nomeDaEstrategia(id)}: ${e instanceof Error ? e.message : String(e)}`);
+          falhas.push(`${nome}: ${e instanceof Error ? e.message : String(e)}`);
           console.error("Erro na série " + id + ":", e);
         }
       }
 
-      // A alocação mensal já ficou nos globais do Python durante a execução
-      // acima — basta lê-la, em vez de rodar a otimização inteira de novo.
       if (marcados.includes("paridade") && novo.paridade) {
         try {
           const alocacao = normalizarAlocacao(await lerVariavelPython("alocacao_mensal"));
@@ -249,30 +353,28 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
       }
 
       setConfigSimulacao({
-        aporteInicial: config.aporteInicial,
-        aportesMensal: config.aportesMensal,
-        dataInicio: config.dataInicio,
-        dataFim: config.dataFim,
+        aporteInicial: prefs.aporteInicial,
+        aportesMensal: prefs.aporteMensal,
+        dataInicio: prefs.dataInicio,
+        dataFim: prefs.dataFim,
       });
-      setAtivosUsados(config.tickers);
+      setAtivosUsados(prefs.ativos);
       setResultados(novo);
       if (falhas.length) setErroSimulacao(falhas.join(" · "));
 
-      // Mede o desenho: o React ainda vai reconciliar e o navegador ainda vai
-      // pintar depois deste bloco. Num PC fraco desenhar custa mais que calcular.
       const tDesenho = performance.now();
       setTimeout(() => {
         void document.body.offsetHeight;
         anotar("interface", "desenho dos gráficos", performance.now() - tDesenho);
       }, 0);
     } finally {
-      fecharTotal([`${marcados.length} série(s)`, `${config.tickers.length} ativo(s)`]);
+      fecharTotal([`${marcados.length} série(s)`, `${prefs.ativos.length} ativo(s)`]);
       setSimulando(false);
     }
   }
 
   const temResultado = Object.values(resultados).some((s) => s && s.length > 0);
-  const seriesDoModo = doModo(modo).map((e) => e.id);
+  const seriesDoModo = doModo(modo, lista).map((e) => e.id);
 
   return (
     <div className="app">
@@ -287,9 +389,13 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
       <PainelEditores
         aberto={painelAberto}
         setPainelAberto={setPainelAberto}
-        codigos={codigos}
-        setCodigos={setCodigos}
         modo={modo}
+        lista={lista}
+        codigos={codigos}
+        editarCodigo={editarCodigo}
+        renomear={renomearEstrategia}
+        remover={removerEstrategia}
+        duplicar={criarEstrategia}
       />
 
       <StatusPython />
@@ -299,12 +405,14 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
         <aside className={"lateral" + (lateralAberta ? " lateral--aberta" : "")}>
           <PainelConfiguracoes
             tickers={tickers}
-            marcados={marcados}
-            setMarcados={setMarcados}
+            lista={lista}
+            prefs={prefs}
+            mudar={mudar}
             tickersSemDados={status.tickersSemDados}
             onSimular={simular}
-            modo={modo}
-            setModo={setModo}
+            onCriarEstrategia={() => criarEstrategia()}
+            onDuplicar={criarEstrategia}
+            onAbrirEditor={() => setPainelAberto(true)}
             pythonPronto={pythonPronto}
             pctCarregamento={carregamento?.pct ?? 0}
             simulando={simulando}
@@ -316,6 +424,7 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
             key={inicioSimulacao ?? "sem-simulacao"}
             simulando={simulando}
             marcados={marcados}
+            lista={lista}
             status={statusEstrategias}
             erro={erroSimulacao}
             inicio={inicioSimulacao}
@@ -358,9 +467,17 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
           ) : (
             <>
               {modo === "aportes" ? (
-                <Grafico_aportes dados={resultados} config={configSimulacao} series={seriesDoModo} />
+                <Grafico_aportes
+                  dados={resultados} config={configSimulacao}
+                  series={seriesDoModo} lista={lista}
+                />
               ) : (
-                <Grafico_rentabilidade dados={resultados} config={configSimulacao} series={seriesDoModo} />
+                <Grafico_rentabilidade
+                  dados={resultados} config={configSimulacao}
+                  series={seriesDoModo} lista={lista}
+                  valorReferencia={prefs.valorReferencia}
+                  setValorReferencia={(v) => mudar("valorReferencia", v)}
+                />
               )}
 
               {marcados.includes("paridade") && alocacaoParidade.length > 0 && (

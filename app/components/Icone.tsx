@@ -11,7 +11,8 @@
 export type NomeIcone =
   | "ajuda" | "ajustes" | "codigo" | "fechar" | "busca" | "calendario"
   | "alerta" | "info" | "check" | "carregando" | "expandir" | "recolher"
-  | "tendencia" | "carteira" | "sol" | "lua" | "adicionar" | "grafico";
+  | "tendencia" | "carteira" | "sol" | "lua" | "adicionar" | "grafico"
+  | "duplicar" | "lixeira";
 
 interface Props {
   nome: NomeIcone;
@@ -106,6 +107,20 @@ const CAMINHOS: Record<NomeIcone, React.ReactNode> = {
     <>
       <path d="M4 4v15a1 1 0 0 0 1 1h15" />
       <path d="M8 15.5v-3M12.5 15.5v-7M17 15.5v-5" />
+    </>
+  ),
+  duplicar: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5.5 15H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v.5" />
+    </>
+  ),
+  lixeira: (
+    <>
+      <path d="M4 6.5h16" />
+      <path d="M9.5 6.5V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5" />
+      <path d="M6.5 6.5 7.3 19a1 1 0 0 0 1 1h7.4a1 1 0 0 0 1-1l.8-12.5" />
+      <path d="M10.5 10v6M13.5 10v6" />
     </>
   ),
 };

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Icone, { type NomeIcone } from "./Icone";
-import { nomeDaEstrategia } from "../lib/estrategias-meta";
+import { nomeDaEstrategia, type MetaEstrategia } from "../lib/estrategias-meta";
 
 /**
  * Painel que mostra a simulação acontecendo, estratégia por estratégia.
@@ -33,13 +33,15 @@ const ROTULO: Record<EstadoEstrategia, string> = {
 interface Props {
   simulando: boolean;
   marcados: string[];
+  /** Catálogo, para achar o nome das estratégias que o usuário criou. */
+  lista: MetaEstrategia[];
   status: Record<string, EstadoEstrategia>;
   erro: string | null;
   /** Instante (Date.now) em que a simulação atual começou. */
   inicio: number | null;
 }
 
-export default function StatusSimulacao({ simulando, marcados, status, erro, inicio }: Props) {
+export default function StatusSimulacao({ simulando, marcados, lista, status, erro, inicio }: Props) {
   // Cronômetro. O tempo vem sempre da diferença com o instante de início, e
   // não de um contador incremental, para não atrasar se o navegador engasgar
   // com o timer. A cada nova simulação o componente é remontado (o pai usa
@@ -91,7 +93,7 @@ export default function StatusSimulacao({ simulando, marcados, status, erro, ini
                       ? <span className="girando"><Icone nome={icone} tamanho={13} /></span>
                       : <Icone nome={icone} tamanho={13} />}
                   </span>
-                  <span style={{ color: "var(--texto)" }}>{nomeDaEstrategia(id)}</span>
+                  <span style={{ color: "var(--texto)" }}>{nomeDaEstrategia(id, lista)}</span>
                 </div>
               );
             })}

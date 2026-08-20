@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 
-import { ESTRATEGIAS } from "../lib/estrategias-meta";
+import { type MetaEstrategia } from "../lib/estrategias-meta";
 import { reduzirPontos, PONTOS_NO_GRAFICO } from "../lib/amostragem";
 import PainelSeries from "./PainelSeries";
 
@@ -24,6 +24,8 @@ interface Props {
   config: ConfigSimulacao | null;
   /** Quais séries o modo atual permite, na ordem do catálogo. */
   series: string[];
+  /** Catálogo completo (embutidas + do usuário). */
+  lista: MetaEstrategia[];
 }
 
 function reais(v: number, casas = 2): string {
@@ -64,7 +66,7 @@ function totalInvestido(config: ConfigSimulacao): number {
   return n === 0 ? 0 : config.aporteInicial + config.aportesMensal * (n - 1);
 }
 
-export default function Grafico({ dados, config, series }: Props) {
+export default function Grafico({ dados, config, series, lista }: Props) {
   /** Séries escondidas do desenho. Ficam calculadas — só não aparecem. */
   const [ocultas, setOcultas] = useState<Set<string>>(new Set());
 
@@ -78,7 +80,31 @@ export default function Grafico({ dados, config, series }: Props) {
   }
 
   const investido = config ? totalInvestido(config) : null;
-  const doModo = useMemo(() => ESTRATEGIAS.filter((e) => series.includes(e.id)), [series]);
+  const doModo = useMemo(() => lista.filter((e) => series.includes(e.id)), [lista, series]);
+  /**
+   * Domínio do eixo Y calculado sobre TODAS as séries, não só as visíveis.
+   *
+   * Sem isso a escala pulava a cada clique num cartão: esconder o CDI mudava o
+   * topo do gráfico e as linhas que sobravam saltavam de lugar. Fixando o
+   * domínio, ligar e desligar séries só acrescenta e remove traços — o que é
+   * exatamente o ponto de poder comparar duas delas.
+   */
+  const dominioY = useMemo<[number, number]>(() => {
+    let minimo = Infinity;
+    let maximo = -Infinity;
+    doModo.forEach(({ id }) => {
+      dados[id]?.forEach((p) => {
+        if (typeof p.valor === "number" && Number.isFinite(p.valor)) {
+          if (p.valor < minimo) minimo = p.valor;
+          if (p.valor > maximo) maximo = p.valor;
+        }
+      });
+    });
+    if (!Number.isFinite(minimo) || !Number.isFinite(maximo)) return [0, 1];
+    const folga = (maximo - minimo) * 0.06 || Math.abs(maximo) * 0.06 || 1;
+    return [minimo - folga, maximo + folga];
+  }, [dados, doModo]);
+
 
   const chartDataCompleto = useMemo(() => {
     const combinado: Record<string, Record<string, number | string>> = {};
@@ -164,6 +190,7 @@ export default function Grafico({ dados, config, series }: Props) {
               stroke="var(--texto-suave)"
               tick={{ fontSize: 11 }}
               width={70}
+              domain={dominioY}
               tickFormatter={(v) => reaisCurto(Number(v))}
             />
             <Tooltip

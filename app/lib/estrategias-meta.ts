@@ -14,9 +14,14 @@
 
 export type Grupo = "estrategia" | "benchmark";
 
+export type IdEmbutido = "paridade" | "eficiente" | "ingenua" | "cdi" | "ibov" | "ipca" | "poupanca";
+
 export interface MetaEstrategia {
-  id: "paridade" | "eficiente" | "ingenua" | "cdi" | "ibov" | "ipca" | "poupanca";
+  /** Embutidas têm id fixo; as do usuário usam "usuario-<timestamp>". */
+  id: string;
   grupo: Grupo;
+  /** Só o que o usuário criou pode ser editado ou apagado. */
+  doUsuario?: boolean;
   titulo: string;
   descricao: string;
   cor: string;
@@ -84,27 +89,59 @@ export const ESTRATEGIAS: MetaEstrategia[] = [
   },
 ];
 
-export type IdSerie = MetaEstrategia["id"];
+export type IdSerie = string;
 
-export function doModo(modo: "aportes" | "rentabilidade") {
-  return ESTRATEGIAS.filter((e) => !e.modos || e.modos.includes(modo));
+/**
+ * Catálogo completo: as embutidas mais as que o usuário escreveu.
+ *
+ * Estratégia do usuário é sempre do grupo "estrategia" e vale nos dois modos —
+ * benchmark é referência de mercado, não faz sentido alguém inventar um.
+ */
+export function catalogo(doUsuario: { id: string; titulo: string; cor: string }[] = []): MetaEstrategia[] {
+  return [
+    ...ESTRATEGIAS,
+    ...doUsuario.map((e) => ({
+      id: e.id,
+      grupo: "estrategia" as Grupo,
+      doUsuario: true,
+      titulo: e.titulo,
+      descricao: "Estratégia sua, guardada neste navegador.",
+      cor: e.cor,
+    })),
+  ];
 }
 
-export function doGrupo(grupo: Grupo, modo: "aportes" | "rentabilidade") {
-  return doModo(modo).filter((e) => e.grupo === grupo);
+export function doModo(
+  modo: "aportes" | "rentabilidade",
+  lista: MetaEstrategia[] = ESTRATEGIAS
+) {
+  return lista.filter((e) => !e.modos || e.modos.includes(modo));
 }
+
+export function doGrupo(
+  grupo: Grupo,
+  modo: "aportes" | "rentabilidade",
+  lista: MetaEstrategia[] = ESTRATEGIAS
+) {
+  return doModo(modo, lista).filter((e) => e.grupo === grupo);
+}
+
+/** Cores disponíveis para estratégias novas, em rodízio. */
+export const CORES_USUARIO = ["var(--cat-5)", "var(--cat-6)", "var(--cat-7)", "var(--cat-8)", "var(--cat-4)"];
 
 /** Só as estratégias precisam de ativos selecionados. */
+/** Benchmark ignora a carteira; estratégia (inclusive a do usuário) precisa dela. */
 export function precisaDeAtivos(id: string): boolean {
-  return ESTRATEGIAS.find((e) => e.id === id)?.grupo === "estrategia";
+  const meta = ESTRATEGIAS.find((e) => e.id === id);
+  return meta ? meta.grupo === "estrategia" : true;
 }
 
-export function corDaEstrategia(id: string): string {
-  return ESTRATEGIAS.find((e) => e.id === id)?.cor ?? "var(--texto-suave)";
+export function corDaEstrategia(id: string, lista: MetaEstrategia[] = ESTRATEGIAS): string {
+  return lista.find((e) => e.id === id)?.cor ?? "var(--texto-suave)";
 }
 
-export function nomeDaEstrategia(id: string): string {
-  return ESTRATEGIAS.find((e) => e.id === id)?.titulo ?? id;
+export function nomeDaEstrategia(id: string, lista: MetaEstrategia[] = ESTRATEGIAS): string {
+  return lista.find((e) => e.id === id)?.titulo ?? id;
 }
 
 /** Compat: alguns componentes ainda chamam pelo nome antigo. */
