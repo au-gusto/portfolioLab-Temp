@@ -1,11 +1,18 @@
 import PaginaPrincipal from "./components/PaginaPrincipal";
-import { lerTickers, lerStatus } from "./lib/fonte-dados";
+import { lerTickersPorBase, lerEstreiasPorBase, lerStatus } from "./lib/fonte-dados";
 
 export default function Home() {
-  // Só a lista de tickers e o status dos dados viajam no HTML. As cotações
-  // vêm depois, por /api/dados/precos, buscadas pelo worker do Python.
-  const tickers = lerTickers();
+  // Só as listas de tickers e o status dos dados viajam no HTML. As cotações
+  // vêm depois, do CDN direto para o worker do Python.
+  const tickersPorBase = lerTickersPorBase();
+  const estreiasPorBase = lerEstreiasPorBase();
   const status = lerStatus();
 
-  return <PaginaPrincipal tickers={tickers} status={status} />;
+  return (
+    <PaginaPrincipal
+      tickersPorBase={tickersPorBase}
+      estreiasPorBase={estreiasPorBase}
+      status={status}
+    />
+  );
 }

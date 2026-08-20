@@ -13,6 +13,8 @@
  * normalmente, com os padrões.
  */
 
+import { BASES, BASE_PADRAO } from "./catalogo-ativos";
+
 const CHAVE = "portfolio-lab:v1";
 
 export interface EstrategiaUsuario {
@@ -27,6 +29,8 @@ export interface EstrategiaUsuario {
 
 export interface Preferencias {
   modo: "aportes" | "rentabilidade";
+  /** Qual base de ativos está selecionada (ver lib/catalogo-ativos.ts). */
+  base: string;
   dataInicio: string;
   dataFim: string;
   ativos: string[];
@@ -54,6 +58,7 @@ export function padroes(): Preferencias {
   const { inicio, fim } = periodoPadrao();
   return {
     modo: "rentabilidade",
+    base: BASE_PADRAO,
     dataInicio: inicio,
     dataFim: fim,
     ativos: [],
@@ -78,6 +83,10 @@ function sanear(bruto: unknown): Preferencias {
   const g = bruto as Record<string, unknown>;
 
   if (g.modo === "aportes" || g.modo === "rentabilidade") p.modo = g.modo;
+  // A base do usuário não é restaurada: ela vive de um arquivo que só existe
+  // na máquina dele e que esta aba não tem mais. Voltar apontando para uma
+  // base vazia daria "escolha ativos" sem lista de onde escolher.
+  if (ehTexto(g.base) && BASES.some((b) => b.id === g.base)) p.base = g.base;
   if (ehTexto(g.dataInicio) && /^\d{4}-\d{2}-\d{2}$/.test(g.dataInicio)) p.dataInicio = g.dataInicio;
   if (ehTexto(g.dataFim) && /^\d{4}-\d{2}-\d{2}$/.test(g.dataFim)) p.dataFim = g.dataFim;
 

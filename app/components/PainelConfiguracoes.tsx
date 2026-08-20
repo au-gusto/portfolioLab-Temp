@@ -4,11 +4,24 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { doGrupo, type MetaEstrategia } from "../lib/estrategias-meta";
 import type { Preferencias } from "../lib/preferencias";
 import type { TickerSemDados } from "../lib/fonte-dados";
+import {
+  BASES, ID_BASE_PROPRIA, dataBR, motivoPeriodoInvalido, type BaseAtivos,
+} from "../lib/catalogo-ativos";
+import type { LaudoBase } from "../lib/pyodideLoader";
 import Icone from "./Icone";
 import Ajuda from "./Ajuda";
 
 interface Props {
   tickers: string[];
+  /** Base de ativos selecionada agora. */
+  base: BaseAtivos;
+  temBasePropria: boolean;
+  tituloBasePropria: string | null;
+  laudoBase: LaudoBase | null;
+  onTrocarBase: (id: string) => void;
+  onSubirBase: (arquivo: File) => Promise<void>;
+  /** Ativos escolhidos que ainda não existiam no início do período. */
+  ativosSemHistorico: { ticker: string; estreia: string }[];
   /** Catálogo já com as estratégias que o usuário escreveu. */
   lista: MetaEstrategia[];
   prefs: Preferencias;
@@ -29,11 +42,15 @@ function formatarBR(iso: string): string {
 }
 
 export default function PainelConfiguracoes({
-  tickers, lista, prefs, mudar, tickersSemDados,
+  tickers, base, temBasePropria, tituloBasePropria, laudoBase,
+  onTrocarBase, onSubirBase, ativosSemHistorico,
+  lista, prefs, mudar, tickersSemDados,
   onSimular, onCriarEstrategia, onDuplicar, onAbrirEditor,
   pythonPronto, pctCarregamento, simulando,
 }: Props) {
   const [filtro, setFiltro] = useState("");
+  const [lendoArquivo, setLendoArquivo] = useState(false);
+  const arquivoRef = useRef<HTMLInputElement>(null);
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
   const [verTodos, setVerTodos] = useState(false);
 
@@ -77,6 +94,9 @@ export default function PainelConfiguracoes({
   const estrategias = doGrupo("estrategia", prefs.modo, lista);
   const benchmarks = doGrupo("benchmark", prefs.modo, lista);
   const precisaAtivos = prefs.marcados.some((id) => estrategias.some((e) => e.id === id));
+
+  // Por que o periodo escolhido nao serve para esta base, se for o caso.
+  const impedimento = motivoPeriodoInvalido(base, prefs.dataInicio);
   const selecionadosMortos = prefs.ativos.filter((t) => mortos.has(t));
   const podeSimular = pythonPronto && !simulando;
 
@@ -276,6 +296,70 @@ export default function PainelConfiguracoes({
           </span>
         </p>
 
+        {/* Qual carteira alimenta a lista abaixo. Cada base tem cobertura e
+            piso de data proprios, entao a escolha muda o que da para simular. */}
+        <div className="abas abas--base" role="tablist" aria-label="Base de ativos">
+          {[...BASES, ...(temBasePropria
+            ? [{ id: ID_BASE_PROPRIA, titulo: "Meus dados" } as BaseAtivos]
+            : [])].map((b) => (
+            <button
+              key={b.id}
+              role="tab"
+              aria-selected={prefs.base === b.id}
+              className={"aba" + (prefs.base === b.id ? " aba--ativa" : "")}
+              onClick={() => onTrocarBase(b.id)}
+            >
+              {b.titulo}
+            </button>
+          ))}
+        </div>
+
+        <p className="dica" style={{ marginBottom: "10px" }}>
+          {base.id === ID_BASE_PROPRIA && tituloBasePropria
+            ? `${tituloBasePropria} — ${tickers.length} ativos, lidos no seu navegador.`
+            : base.descricao}
+        </p>
+
+        {ativosSemHistorico.length > 0 && (
+          <div className="aviso aviso--atencao" style={{ marginBottom: "10px" }}>
+            <span className="aviso__icone"><Icone nome="alerta" tamanho={15} /></span>
+            <span>
+              <strong>
+                {ativosSemHistorico.map((a) => a.ticker).join(", ")}
+              </strong>{" "}
+              {ativosSemHistorico.length === 1 ? "não tinha" : "não tinham"} cotação
+              em {formatarBR(prefs.dataInicio)}
+              {ativosSemHistorico.length === 1
+                && ` (estreia em ${formatarBR(ativosSemHistorico[0].estreia)})`}.
+              Um ativo sem histórico zera a estratégia inteira.{" "}
+              <button
+                className="ligacao"
+                onClick={() => {
+                  const fora = new Set(ativosSemHistorico.map((a) => a.ticker));
+                  mudar("ativos", prefs.ativos.filter((t) => !fora.has(t)));
+                }}
+              >
+                Remover
+              </button>
+            </span>
+          </div>
+        )}
+
+        {impedimento && (
+          <div className="aviso aviso--atencao" style={{ marginBottom: "10px" }}>
+            <span className="aviso__icone"><Icone nome="alerta" tamanho={15} /></span>
+            <span>
+              {impedimento}{" "}
+              <button
+                className="ligacao"
+                onClick={() => mudar("dataInicio", base.inicioMinimo!)}
+              >
+                Usar {dataBR(base.inicioMinimo!)}
+              </button>
+            </span>
+          </div>
+        )}
+
         <div ref={buscaRef} className="campo-busca" style={{ marginBottom: "10px" }}>
           <span className="campo-busca__icone"><Icone nome="busca" tamanho={15} /></span>
           <input
@@ -425,6 +509,66 @@ export default function PainelConfiguracoes({
             </>
           )}
         </button>
+        {/* ── Base propria ──────────────────────────────────────────────
+            O arquivo e lido pelo Python dentro da propria aba; nada sobe para
+            servidor nenhum. A conferencia acontece antes de virar tabela,
+            porque planilha fora do padrao nao da erro: da numero errado com
+            cara de certo. */}
+        <div className="base-propria">
+          <input
+            ref={arquivoRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const arquivo = e.target.files?.[0];
+              e.target.value = "";
+              if (!arquivo) return;
+              setLendoArquivo(true);
+              try { await onSubirBase(arquivo); } finally { setLendoArquivo(false); }
+            }}
+          />
+          <button
+            className="botao-icone"
+            style={{ width: "100%", fontSize: "12px", justifyContent: "center" }}
+            onClick={() => arquivoRef.current?.click()}
+            disabled={!pythonPronto || lendoArquivo}
+          >
+            <span className="com-icone">
+              <Icone nome={lendoArquivo ? "carregando" : "adicionar"} tamanho={14} />
+              {lendoArquivo ? "Conferindo o arquivo..." : "Usar meus dados (Excel ou CSV)"}
+            </span>
+          </button>
+
+          <p className="dica">
+            Uma coluna <b>Data</b> (dd/mm/aaaa) e depois uma coluna por ativo,
+            com o codigo no cabecalho.
+          </p>
+
+          {laudoBase && !laudoBase.ok && (
+            <div className="aviso aviso--erro" style={{ marginTop: "8px" }}>
+              <span className="aviso__icone"><Icone nome="alerta" tamanho={15} /></span>
+              <span>{laudoBase.erro}</span>
+            </div>
+          )}
+
+          {laudoBase?.ok && (
+            <div className="aviso aviso--info" style={{ marginTop: "8px" }}>
+              <span className="aviso__icone"><Icone nome="check" tamanho={15} /></span>
+              <span>
+                <strong>{laudoBase.tickers?.length} ativos</strong>, {laudoBase.pregoes} pregoes
+                de {dataBR(laudoBase.inicio!)} a {dataBR(laudoBase.fim!)}.
+                {laudoBase.avisos?.length ? (
+                  <>
+                    <br />
+                    {laudoBase.avisos.join(" ")}
+                  </>
+                ) : null}
+              </span>
+            </div>
+          )}
+        </div>
+
         {podeSimular && precisaAtivos && prefs.ativos.length === 0 && (
           <p className="dica com-icone" style={{ justifyContent: "center" }}>
             <Icone nome="info" tamanho={13} />

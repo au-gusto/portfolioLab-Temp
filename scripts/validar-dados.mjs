@@ -61,47 +61,68 @@ const hoje = new Date().toISOString().slice(0, 10);
 
 // ─── Cotações dos ativos ──────────────────────────────────────────────────────
 
-function validarAtivos() {
-  const linhas = linhasDe("Dados_Ativos_B3_AdjClose.csv");
+function validarAtivos(arquivo = "Dados_Ativos_B3_AdjClose.csv", rotulo = "Ativos") {
+  const linhas = linhasDe(arquivo);
   if (!linhas) return;
 
   const cabecalho = lerLinhaCSV(linhas[0]);
   const tickers = cabecalho.slice(1);
-  console.log(`Ativos: ${linhas.length - 1} pregões x ${tickers.length} tickers`);
+  console.log(`${rotulo}: ${linhas.length - 1} pregões x ${tickers.length} tickers`);
 
-  if (tickers.length < 10) erro(`Ativos: só ${tickers.length} tickers no cabeçalho`);
-  if (new Set(tickers).size !== tickers.length) erro("Ativos: há ticker repetido no cabeçalho");
+  if (tickers.length < 10) erro(`${rotulo}: só ${tickers.length} tickers no cabeçalho`);
+  if (new Set(tickers).size !== tickers.length) erro(`${rotulo}: há ticker repetido no cabeçalho`);
 
   let anterior = "";
   let semMovimento = 0;
+
+  // Papel que entrou no indice depois do inicio do arquivo nao tem preco nos
+  // primeiros pregoes, e isso e correto — nao havia acao negociando. O que nao
+  // pode e faltar preco DEPOIS da estreia: ai e coleta furada, e a serie
+  // ficaria com um buraco no meio.
+  const estreou = new Array(tickers.length).fill(false);
+  const atrasados = [];
 
   for (let i = 1; i < linhas.length; i++) {
     const celulas = lerLinhaCSV(linhas[i]);
 
     if (celulas.length !== cabecalho.length) {
-      erro(`Ativos linha ${i + 1}: ${celulas.length} colunas, esperado ${cabecalho.length}`);
+      erro(`${rotulo} linha ${i + 1}: ${celulas.length} colunas, esperado ${cabecalho.length}`);
       continue;
     }
 
     const iso = paraISO(celulas[0]);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-      erro(`Ativos linha ${i + 1}: data inválida "${celulas[0]}"`);
+      erro(`${rotulo} linha ${i + 1}: data inválida "${celulas[0]}"`);
       continue;
     }
     if (iso <= anterior) {
-      erro(`Ativos linha ${i + 1}: data ${iso} não é posterior a ${anterior}`);
+      erro(`${rotulo} linha ${i + 1}: data ${iso} não é posterior a ${anterior}`);
     }
-    if (iso > hoje) erro(`Ativos linha ${i + 1}: data ${iso} está no futuro`);
+    if (iso > hoje) erro(`${rotulo} linha ${i + 1}: data ${iso} está no futuro`);
     anterior = iso;
 
-    // Preços: todos presentes, numéricos e positivos
+    // Preços: numéricos e positivos, a partir da estreia de cada papel.
     let iguaisAoAnterior = 0;
     for (let c = 1; c < celulas.length; c++) {
-      const v = Number(String(celulas[c]).replace(",", "."));
+      const bruto = String(celulas[c]).trim();
+      const ticker = tickers[c - 1];
+
+      if (bruto === "") {
+        if (estreou[c - 1]) {
+          erro(`${rotulo} linha ${i + 1}, ${ticker}: preço ausente depois da estreia`);
+        } else if (!atrasados.includes(ticker)) {
+          atrasados.push(ticker);
+        }
+        continue;
+      }
+
+      const v = Number(bruto.replace(",", "."));
       if (!Number.isFinite(v)) {
-        erro(`Ativos linha ${i + 1}, ${tickers[c - 1]}: valor não numérico "${celulas[c]}"`);
+        erro(`${rotulo} linha ${i + 1}, ${ticker}: valor não numérico "${celulas[c]}"`);
       } else if (v <= 0) {
-        erro(`Ativos linha ${i + 1}, ${tickers[c - 1]}: preço ${v}`);
+        erro(`${rotulo} linha ${i + 1}, ${ticker}: preço ${v}`);
+      } else {
+        estreou[c - 1] = true;
       }
     }
     if (i > 1) {
@@ -116,7 +137,15 @@ function validarAtivos() {
   }
 
   if (semMovimento > 0) {
-    aviso(`Ativos: ${semMovimento} pregão(ões) com TODOS os preços idênticos ao dia anterior`);
+    aviso(`${rotulo}: ${semMovimento} pregão(ões) com TODOS os preços idênticos ao dia anterior`);
+  }
+  if (atrasados.length) {
+    aviso(`${rotulo}: ${atrasados.length} papel(éis) sem preço no início do arquivo `
+      + `(estrearam depois): ${atrasados.join(", ")}`);
+  }
+  const nunca = tickers.filter((_, k) => !estreou[k]);
+  if (nunca.length) {
+    erro(`${rotulo}: ${nunca.length} papel(éis) sem nenhum preço: ${nunca.join(", ")}`);
   }
   console.log(`  último pregão: ${anterior}`);
 }
@@ -220,7 +249,8 @@ function validarStatus() {
 
 // ─── Execução ─────────────────────────────────────────────────────────────────
 
-validarAtivos();
+validarAtivos("Dados_Ativos_B3_AdjClose.csv", "Ativos (Ibovespa)");
+validarAtivos("Dados_Ativos_IBRX100_AdjClose.csv", "Ativos (IBRX-100)");
 validarCDI();
 validarIbov();
 validarIndices();

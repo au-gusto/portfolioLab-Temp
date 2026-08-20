@@ -140,12 +140,40 @@ function enviar(mensagem: Record<string, unknown>) {
 export async function executarEstrategia(
   codigo: string,
   variaveis: Record<string, unknown>,
-  perfilar = false
+  perfilar = false,
+  base?: { id: string; arquivo: string }
 ): Promise<{ data: string; valor: number }[]> {
-  return (await enviar({ tipo: "executar", codigo, variaveis, bruto: false, perfilar })) as {
+  return (await enviar({ tipo: "executar", codigo, variaveis, bruto: false, perfilar, base })) as {
     data: string;
     valor: number;
   }[];
+}
+
+/** Resultado da conferência de um arquivo de cotações que o usuário subiu. */
+export interface LaudoBase {
+  ok: boolean;
+  erro?: string;
+  tickers?: string[];
+  pregoes?: number;
+  inicio?: string;
+  fim?: string;
+  avisos?: string[];
+}
+
+/**
+ * Manda o arquivo do usuário para o worker conferir e, se estiver no padrão,
+ * adotar como base de cotações.
+ *
+ * Os bytes vão do <input type="file"> direto para o Pyodide: nada sobe para o
+ * servidor, e nada é gravado fora da aba.
+ */
+export async function usarBasePropria(nome: string, bytes: ArrayBuffer): Promise<LaudoBase> {
+  return (await enviar({ tipo: "usarBasePropria", nome, bytes })) as LaudoBase;
+}
+
+/** Deixa uma base já montada no Python, para o clique seguinte não esperar. */
+export async function prepararBase(base: { id: string; arquivo: string }): Promise<void> {
+  await enviar({ tipo: "trocarBase", base });
 }
 
 /** Roda um código Python e devolve o retorno cru, sem normalizar. */

@@ -8,6 +8,8 @@ import {
   executarEstrategia,
   lerVariavelPython,
   type EstadoCarregamento,
+  usarBasePropria,
+  type LaudoBase,
 } from "../lib/pyodideLoader";
 import type { StatusDados } from "../lib/fonte-dados";
 import {
@@ -43,9 +45,15 @@ import {
   codigoIbov_rentabilidade, codigoIpca_rentabilidade, codigoPoupanca_rentabilidade,
 } from "../estrategias/benchmarks";
 import { ESQUELETO_ESTRATEGIA } from "../estrategias/modelo";
+import {
+  acharBase, basePropria, motivoPeriodoInvalido, dataBR, ID_BASE_PROPRIA,
+} from "../lib/catalogo-ativos";
 
 interface Props {
-  tickers: string[];
+  /** Tickers de cada base, indexados pelo id da base. */
+  tickersPorBase: Record<string, string[]>;
+  /** Papéis que estrearam depois do início do arquivo, por base. */
+  estreiasPorBase: Record<string, Record<string, string>>;
   status: StatusDados;
 }
 
@@ -101,9 +109,14 @@ function normalizarAlocacao(raw: any): AlocacaoMes[] {
     .filter((p) => p.data);
 }
 
-export default function PaginaPrincipal({ tickers, status }: Props) {
+export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, status }: Props) {
   const [painelAberto, setPainelAberto] = useState(false);
   const [lateralAberta, setLateralAberta] = useState(false);
+
+  // Base montada a partir de um arquivo do usuario. Vive so nesta aba: os
+  // dados nunca saem da maquina dele, entao nao ha o que persistir.
+  const [minhaBase, setMinhaBase] = useState<{ titulo: string; tickers: string[] } | null>(null);
+  const [laudoBase, setLaudoBase] = useState<LaudoBase | null>(null);
 
   // O servidor não tem localStorage, então a primeira renderização usa os
   // padrões e a preferência salva entra logo depois da hidratação. Ler no
@@ -125,6 +138,73 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
   }
 
   const { modo, marcados, estrategiasUsuario } = prefs;
+
+  /** A base escolhida agora, ja considerando a do usuario. */
+  const base = useMemo(
+    () => acharBase(prefs.base, minhaBase ? [basePropria(minhaBase.titulo)] : []),
+    [prefs.base, minhaBase]
+  );
+
+  const tickers = useMemo(() => {
+    if (base.id === ID_BASE_PROPRIA) return minhaBase?.tickers ?? [];
+    return tickersPorBase[base.id] ?? [];
+  }, [base.id, minhaBase, tickersPorBase]);
+
+  /**
+   * Ativos escolhidos que ainda nao tinham preco no inicio do periodo.
+   *
+   * Um so deles basta para a estrategia inteira voltar vazia: a covariancia
+   * sai com NaN e o otimizador nao devolve peso nenhum. Antes disso o cartao
+   * simplesmente sumia do painel, sem dizer por que.
+   */
+  const ativosSemHistorico = useMemo(() => {
+    const estreias = estreiasPorBase[base.id] ?? {};
+    return prefs.ativos
+      .filter((t) => estreias[t] && estreias[t] > prefs.dataInicio)
+      .map((t) => ({ ticker: t, estreia: estreias[t] }));
+  }, [prefs.ativos, prefs.dataInicio, base.id, estreiasPorBase]);
+
+  /**
+   * Troca a base e larga os ativos que nao existem na nova.
+   *
+   * Sem isso a carteira ficaria com codigos que a base nova nao tem: o Python
+   * receberia um ticker sem coluna e a estrategia quebraria — ou pior, seguiria
+   * com um ativo a menos sem ninguem notar.
+   */
+  function trocarBase(id: string) {
+    setPrefs((atual) => {
+      const nova = id === ID_BASE_PROPRIA
+        ? (minhaBase?.tickers ?? [])
+        : (tickersPorBase[id] ?? []);
+      const permitidos = new Set(nova);
+      const sobreviventes = atual.ativos.filter((t) => permitidos.has(t));
+
+      const alvo = acharBase(id, minhaBase ? [basePropria(minhaBase.titulo)] : []);
+      const inicio = alvo.inicioMinimo && atual.dataInicio < alvo.inicioMinimo
+        ? alvo.inicioMinimo
+        : atual.dataInicio;
+
+      return { ...atual, base: id, ativos: sobreviventes, dataInicio: inicio };
+    });
+    setErroSimulacao(null);
+  }
+
+  /** Le o arquivo do usuario e deixa o Python conferir antes de adotar. */
+  async function subirBasePropria(arquivo: File) {
+    setLaudoBase(null);
+    try {
+      const bytes = await arquivo.arrayBuffer();
+      const laudo = await usarBasePropria(arquivo.name, bytes);
+      setLaudoBase(laudo);
+      if (laudo.ok && laudo.tickers?.length) {
+        setMinhaBase({ titulo: arquivo.name, tickers: laudo.tickers });
+        setPrefs((atual) => ({ ...atual, base: ID_BASE_PROPRIA, ativos: [] }));
+        setErroSimulacao(null);
+      }
+    } catch (e) {
+      setLaudoBase({ ok: false, erro: e instanceof Error ? e.message : String(e) });
+    }
+  }
 
   /** Catálogo com as embutidas + as que o usuário escreveu. */
   const lista = useMemo(() => catalogo(estrategiasUsuario), [estrategiasUsuario]);
@@ -279,6 +359,27 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
       return;
     }
 
+    // A base pode ter piso de data. Barramos aqui, e não lá no Python, porque
+    // o Python não recusaria: ele calcularia a covariância com o punhado de
+    // pregões que existisse e devolveria pesos de aparência normal.
+    const impedimento = motivoPeriodoInvalido(base, prefs.dataInicio);
+    if (impedimento) {
+      setErroSimulacao(impedimento);
+      return;
+    }
+
+    if (marcados.some(precisaDeAtivos) && ativosSemHistorico.length) {
+      const quais = ativosSemHistorico
+        .map((a) => `${a.ticker} (desde ${dataBR(a.estreia)})`)
+        .join(", ");
+      setErroSimulacao(
+        `Sem cotação no início do período: ${quais}. `
+        + "Um ativo sem histórico zera a estratégia inteira, então remova-o ou "
+        + "comece o período depois da estreia dele."
+      );
+      return;
+    }
+
     const orcamentoRisco = (() => {
       if (!prefs.usarOrcamento || prefs.ativos.length === 0) return {};
       const total = prefs.ativos.reduce((s, t) => s + (prefs.orcamento[t] ?? 1), 0);
@@ -305,6 +406,7 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
     };
 
     anotar("interface", "configuração da simulação", 0, [
+      `base: ${base.titulo}`,
       `período: ${prefs.dataInicio} → ${prefs.dataFim}`,
       `ativos (${prefs.ativos.length}): ${prefs.ativos.join(", ") || "—"}`,
       `séries: ${marcados.map((id) => nomeDaEstrategia(id, lista)).join(", ")}`,
@@ -325,7 +427,10 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
         try {
           const codigo = codigos[id];
           if (!codigo || !codigo.trim()) throw new Error("sem código — escreva a estratégia no editor");
-          const serie = await executarEstrategia(codigo, { ...variaveis, __nome: nome }, perfilarPython);
+          const serie = await executarEstrategia(
+            codigo, { ...variaveis, __nome: nome }, perfilarPython,
+            { id: base.id, arquivo: base.arquivo },
+          );
           fecharSerie();
           novo[id] = serie;
           marcarEstrategia(id, serie.length > 0 ? "ok" : "vazio");
@@ -405,6 +510,13 @@ export default function PaginaPrincipal({ tickers, status }: Props) {
         <aside className={"lateral" + (lateralAberta ? " lateral--aberta" : "")}>
           <PainelConfiguracoes
             tickers={tickers}
+            base={base}
+            temBasePropria={!!minhaBase}
+            tituloBasePropria={minhaBase?.titulo ?? null}
+            laudoBase={laudoBase}
+            onTrocarBase={trocarBase}
+            onSubirBase={subirBasePropria}
+            ativosSemHistorico={ativosSemHistorico}
             lista={lista}
             prefs={prefs}
             mudar={mudar}

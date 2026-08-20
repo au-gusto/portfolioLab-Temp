@@ -22,6 +22,7 @@ const yahoo = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 const DIR = path.join(process.cwd(), "public", "Dados");
 const ARQ_ATIVOS = path.join(DIR, "Dados_Ativos_B3_AdjClose.csv");
+const ARQ_IBRX100 = path.join(DIR, "Dados_Ativos_IBRX100_AdjClose.csv");
 const ARQ_CDI = path.join(DIR, "cdi_data_total.csv");
 const ARQ_STATUS = path.join(DIR, "atualizado-em.json");
 const ARQ_IBOV = path.join(DIR, "ibov.csv");
@@ -125,8 +126,12 @@ function amanha() {
 
 // ─── Ativos ───────────────────────────────────────────────────────────────────
 
-async function atualizarAtivos() {
-  const texto = fs.readFileSync(ARQ_ATIVOS, "utf-8");
+async function atualizarAtivos(arquivo = ARQ_ATIVOS, rotulo = "Ativos") {
+  if (!fs.existsSync(arquivo)) {
+    console.log(`${rotulo}: arquivo ausente — pulando.`);
+    return { novos: 0, ultimaData: null, tickers: 0, falhos: [] };
+  }
+  const texto = fs.readFileSync(arquivo, "utf-8");
   const quebra = texto.includes("\r\n") ? "\r\n" : "\n";
   const linhas = texto.split(/\r?\n/).filter((l) => l.trim());
 
@@ -146,7 +151,7 @@ async function atualizarAtivos() {
   const inicio = desde.toISOString().slice(0, 10);
   const hoje = amanha();
 
-  console.log(`Ativos: historico vai ate ${ultimaData} (${linhas.length - 1} pregoes, ${tickers.length} tickers)`);
+  console.log(`${rotulo}: historico vai ate ${ultimaData} (${linhas.length - 1} pregoes, ${tickers.length} tickers)`);
   if (inicio >= hoje) {
     console.log("  ja esta atualizado.");
     return { novos: 0, ultimaData, tickers: tickers.length, falhos: [] };
@@ -223,7 +228,7 @@ async function atualizarAtivos() {
   });
 
   if (novas.length) {
-    fs.appendFileSync(ARQ_ATIVOS, quebra + novas.join(quebra));
+    fs.appendFileSync(arquivo, quebra + novas.join(quebra));
   }
   console.log(`  +${novas.length} pregoes` + (datas.length ? ` (ate ${datas[datas.length - 1]})` : ""));
   return { novos: novas.length, ultimaData: datas.at(-1) ?? ultimaData, tickers: tickers.length, falhos };
@@ -348,7 +353,12 @@ async function atualizarIndicesMensais() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const ativos = await atualizarAtivos();
+const ativos = await atualizarAtivos(ARQ_ATIVOS, "Ativos (Ibovespa)");
+
+// A base do IBRX-100 precisa envelhecer junto. Deixar so uma delas no cron era
+// repetir o problema que ja tivemos: cotacao congelada por meses sem nada na
+// tela indicando isso.
+const ibrx100 = await atualizarAtivos(ARQ_IBRX100, "Ativos (IBRX-100)");
 const cdi = await atualizarCDI();
 const ibov = await atualizarIbov();
 const indices = await atualizarIndicesMensais();
@@ -356,6 +366,7 @@ const indices = await atualizarIndicesMensais();
 fs.writeFileSync(ARQ_STATUS, JSON.stringify({
   atualizadoEm: new Date().toISOString(),
   ativos: { ultimoPregao: ativos.ultimaData, tickers: ativos.tickers },
+  ibrx100: { ultimoPregao: ibrx100.ultimaData, tickers: ibrx100.tickers },
   cdi: { ultimoDia: cdi.ultimaData },
   ibov: { ultimoPregao: ibov },
   indicesMensais: { ultimoMes: indices },
