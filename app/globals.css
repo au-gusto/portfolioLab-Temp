@@ -138,13 +138,20 @@ img, video { max-width: 100%; height: auto; }
 :root {
   color-scheme: light;
 
-  --fundo: #EDF3EF;
+  /* Areia morna, não branco.
+     O fundo anterior estava a 5,6 de distância CIE76 do branco puro — ou seja,
+     era branco, e a tela inteira brilhava. Este está a 13,8, ainda com L* 88:
+     continua claro, mas para de bater no olho.
+     A escolha do MATIZ não é gosto: o verde da marca é frio, e um fundo morno
+     é o que faz cor fria saltar. Um fundo esverdiado punha o verde contra o
+     próprio verde, e era por isso que a marca sumia no claro. */
+  --fundo: #E2DCD0;
   --fundo-card: #FFFFFF;
-  --fundo-elevado: #E3EDE7;
-  --borda: #D1DFD7;
-  --borda-suave: #E2EBE5;
+  --fundo-elevado: #D8D1C4;
+  --borda: #CBC3B5;
+  --borda-suave: #DAD3C7;
   --texto: #131A24;
-  --texto-suave: #55636F;
+  --texto-suave: #4B5560;
 
   --primaria: #0F766E;
   --primaria-forte: #115E59;
@@ -182,13 +189,13 @@ img, video { max-width: 100%; height: auto; }
   /* Séries dos gráficos: matizes bem separados e cromas altos. O CDI é o único
      de propósito apagado — é régua, não competidor. */
   --serie-paridade: #0D8A72;
-  --serie-cdi: #4A5A6A;
-  --serie-eficiente: #A16207;
-  --serie-ingenua: #E8620A;
+  --serie-cdi: #5C5C5C;
+  --serie-eficiente: #8A5A0B;
+  --serie-ingenua: #DE6410;
   --serie-ibov: #6D28D9;
-  --serie-ipca: #B91C1C;
-  --serie-poupanca: #4D7C0F;
-  --serie-minvar: #BE185D;
+  --serie-ipca: #C81E4A;
+  --serie-poupanca: #6B8F1F;
+  --serie-minvar: #A3197E;
 
   /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
      para nenhum parecer mais importante só por ser mais claro. */
@@ -212,7 +219,7 @@ img, video { max-width: 100%; height: auto; }
   --raio: 13px;
   --raio-p: 9px;
 
-  --sombra: 0 1px 2px rgba(20, 40, 32, 0.05), 0 10px 30px rgba(24, 52, 44, 0.08);
+  --sombra: 0 1px 2px rgba(60, 48, 30, 0.06), 0 10px 30px rgba(60, 48, 30, 0.10);
   --sombra-cor: 0 1px 2px rgba(15, 118, 110, 0.08), 0 12px 32px rgba(15, 118, 110, 0.13);
 }
 
@@ -271,13 +278,13 @@ img, video { max-width: 100%; height: auto; }
     --negativo-fundo: rgba(192, 120, 126, 0.10);
 
     --serie-paridade: #2ED3A7;
-    --serie-cdi: #7C8B99;
-    --serie-eficiente: #F0A93C;
-    --serie-ingenua: #FF7A45;
-    --serie-ibov: #A98BFF;
-    --serie-ipca: #FF6B6B;
-    --serie-poupanca: #B6D94A;
-    --serie-minvar: #F06DB0;
+    --serie-cdi: #93918A;
+    --serie-eficiente: #EFC53F;
+    --serie-ingenua: #FF8A50;
+    --serie-ibov: #9E8CFF;
+    --serie-ipca: #FF5A5A;
+    --serie-poupanca: #8FD94A;
+    --serie-minvar: #E866D8;
 
     --cat-1: #2ED3A7;
     --cat-2: #F5B033;
@@ -334,13 +341,13 @@ img, video { max-width: 100%; height: auto; }
   --negativo-fundo: rgba(192, 120, 126, 0.10);
 
   --serie-paridade: #2ED3A7;
-  --serie-cdi: #7C8B99;
-  --serie-eficiente: #F0A93C;
-  --serie-ingenua: #FF7A45;
-  --serie-ibov: #A98BFF;
-  --serie-ipca: #FF6B6B;
-  --serie-poupanca: #B6D94A;
-  --serie-minvar: #F06DB0;
+  --serie-cdi: #93918A;
+  --serie-eficiente: #EFC53F;
+  --serie-ingenua: #FF8A50;
+  --serie-ibov: #9E8CFF;
+  --serie-ipca: #FF5A5A;
+  --serie-poupanca: #8FD94A;
+  --serie-minvar: #E866D8;
 
   --cat-1: #2ED3A7;
   --cat-2: #F5B033;
@@ -1799,11 +1806,11 @@ body {
 .serie-card {
   border-radius: var(--raio-p);
   border-left-width: 3px;
-  background: color-mix(in oklab, var(--cor-serie) 7%, var(--fundo));
+  background: color-mix(in oklab, var(--cor-serie) 8%, var(--fundo-card));
   transition: background 0.15s, box-shadow 0.18s, transform 0.12s, opacity 0.15s;
 }
 .serie-card:hover {
-  background: color-mix(in oklab, var(--cor-serie) 14%, var(--fundo));
+  background: color-mix(in oklab, var(--cor-serie) 15%, var(--fundo-card));
   transform: translateY(-1px);
   box-shadow: 0 6px 18px color-mix(in oklab, var(--cor-serie) 26%, transparent);
 }
@@ -2234,18 +2241,48 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 /* Recolhida, o puxador fica sempre visível: é o único caminho de volta. */
 .puxador-zona--recolhida .puxador { opacity: 1; transform: scale(1); }
 
+/* ══ RETRAÇÃO SEM TRAVAR ═════════════════════════════════════════════════════
+   Medido: com os gráficos na tela, cada mudança de largura custa ~400 ms de
+   thread principal; sem gráficos, custa zero. O Recharts refaz o layout
+   inteiro a cada resize, e animar a largura significava pagar isso a cada
+   quadro.
+
+   Agora a largura muda UMA vez. A lateral sai do fluxo na hora — os gráficos
+   recalculam uma única vez — e o que desliza é `transform`, que roda no
+   compositor. É isso que salva a animação: ela continua fluida mesmo enquanto
+   a thread principal está ocupada redesenhando o gráfico. */
+
 .lateral {
-  transition: width 0.22s ease, padding 0.22s ease, opacity 0.16s ease;
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity 0.16s ease;
+  /* Sem isto o conteúdo da lateral participa do layout do resto da página a
+     cada repintura. */
+  contain: layout paint;
 }
 
 .lateral--recolhida {
-  width: 0;
-  padding-left: 0;
-  padding-right: 0;
-  border-right-color: transparent;
+  position: absolute;
+  left: 0;
+  top: var(--altura-cabecalho);
+  transform: translateX(-100%);
   opacity: 0;
-  overflow: hidden;
+  pointer-events: none;
+  will-change: transform, opacity;
+  border-right-color: transparent;
 }
+
+/* Ao voltar, a lateral já está no fluxo — o deslize é decorativo e roda uma
+   vez só, enquanto a classe existe. */
+.lateral--entrando {
+  animation: lateral-entra 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes lateral-entra {
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+.corpo { position: relative; }
 
 @media (prefers-reduced-motion: reduce) {
   .lateral { transition: none; }
@@ -2257,9 +2294,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 @media (max-width: 900px) {
   .puxador-zona { display: none; }
   .lateral--recolhida {
+    position: fixed;
     width: 100%;
     padding: 20px;
     opacity: 1;
+    transform: none;
+    pointer-events: auto;
   }
 }
 
@@ -2617,3 +2657,4 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .par-de-paineis .tabela-metricas { font-size: 12px; }
 .par-de-paineis .tabela-metricas th,
 .par-de-paineis .tabela-metricas td { padding: 6px 8px; }
+

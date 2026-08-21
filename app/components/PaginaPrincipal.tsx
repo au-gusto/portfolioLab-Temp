@@ -137,6 +137,28 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
   // configuracao escondida deixaria a pessoa sem saber por onde comecar.
   const [lateralRecolhida, setLateralRecolhida] = useState(false);
 
+  /**
+   * Janela em que a lateral está deslizando.
+   *
+   * Existe por um motivo medido: com os gráficos na tela, cada mudança de
+   * largura custa ~400 ms de thread principal (sem gráficos, custa zero — o
+   * Recharts refaz o layout inteiro). Animar a largura significava pagar isso
+   * a cada quadro, e era exatamente o travamento.
+   *
+   * Agora a largura muda UMA vez, de imediato, e o que desliza é um
+   * `transform` — que roda no compositor e continua fluido mesmo enquanto a
+   * thread principal está ocupada refazendo o gráfico.
+   */
+  const [deslizando, setDeslizando] = useState(false);
+  const tempoDeslize = useRef<number | null>(null);
+
+  function alternarLateral() {
+    setDeslizando(true);
+    setLateralRecolhida((v) => !v);
+    if (tempoDeslize.current) window.clearTimeout(tempoDeslize.current);
+    tempoDeslize.current = window.setTimeout(() => setDeslizando(false), 260);
+  }
+
   // Base montada a partir de um arquivo do usuario. Vive so nesta aba: os
   // dados nunca saem da maquina dele, entao nao ha o que persistir.
   const [minhaBase, setMinhaBase] = useState<{ titulo: string; tickers: string[] } | null>(null);
@@ -495,8 +517,8 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
     // sozinha; recolher também deixaria o estado ligado sem nada na tela
     // indicando isso, e a lateral apareceria escondida ao voltar para a tela
     // grande.
-    if (typeof window !== "undefined" && window.innerWidth > 900) {
-      setLateralRecolhida(true);
+    if (typeof window !== "undefined" && window.innerWidth > 900 && !lateralRecolhida) {
+      alternarLateral();
     }
     setStatusEstrategias(Object.fromEntries(aRodar.map((id) => [id, "fila" as EstadoEstrategia])));
 
@@ -644,6 +666,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
             "lateral"
             + (lateralAberta ? " lateral--aberta" : "")
             + (lateralRecolhida ? " lateral--recolhida" : "")
+            + (deslizando && !lateralRecolhida ? " lateral--entrando" : "")
           }
           /* Recolhida, a lateral tem largura zero mas continua no fluxo: sem
              `inert` os onze campos dentro dela seguiriam recebendo Tab,
@@ -677,7 +700,7 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         <div className={"puxador-zona" + (lateralRecolhida ? " puxador-zona--recolhida" : "")}>
           <button
             className="puxador"
-            onClick={() => setLateralRecolhida((v) => !v)}
+            onClick={alternarLateral}
             aria-expanded={!lateralRecolhida}
             aria-label={lateralRecolhida ? "Mostrar a configuração" : "Esconder a configuração"}
             title={lateralRecolhida ? "Mostrar a configuração" : "Esconder a configuração"}

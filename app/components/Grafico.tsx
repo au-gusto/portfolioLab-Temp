@@ -184,7 +184,7 @@ export default function Grafico({ dados, config, series, lista }: Props) {
       )}
 
       <div className="grafico">
-        <ResponsiveContainer>
+        <ResponsiveContainer debounce={120}>
           <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" vertical={false} />
             <XAxis

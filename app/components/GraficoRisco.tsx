@@ -5,6 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { volatilidadeMovel, JANELA_RISCO } from "../lib/metricas";
+import { reduzirPontos, PONTOS_NO_GRAFICO } from "../lib/amostragem";
 import type { MetaEstrategia } from "../lib/estrategias-meta";
 import Ajuda from "./Ajuda";
 
@@ -50,8 +51,12 @@ export default function GraficoRisco({ series, dados }: Props) {
       });
     });
 
-    const ordenadas = Object.values(combinado).sort((a, b) =>
-      String(a.data).localeCompare(String(b.data))
+    const ordenadas = reduzirPontos(
+      Object.values(combinado).sort((a, b) => String(a.data).localeCompare(String(b.data))),
+      PONTOS_NO_GRAFICO,
+      // A curva de risco é suave; qualquer série serve de referência para o
+      // algoritmo escolher quais pontos preservam a forma.
+      (p) => Number(p[series[0]?.id ?? ""] ?? 0),
     );
 
     let minimo = Infinity;
@@ -103,7 +108,7 @@ export default function GraficoRisco({ series, dados }: Props) {
       </p>
 
       <div className="grafico--baixo" style={{ width: "100%" }}>
-        <ResponsiveContainer>
+        <ResponsiveContainer debounce={120}>
           <LineChart data={linhas} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" vertical={false} />
             <XAxis

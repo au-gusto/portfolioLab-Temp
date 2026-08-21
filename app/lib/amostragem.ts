@@ -75,4 +75,13 @@ export function reduzirPontos<T>(
 }
 
 /** Quantos pontos vale a pena desenhar. Acima disso o olho não distingue. */
-export const PONTOS_NO_GRAFICO = 500;
+/**
+ * Quantos pontos cada linha desenha.
+ *
+ * O gráfico tem cerca de 950px de largura. Com 500 pontos eram dois por
+ * pixel — o segundo nunca chegava a aparecer, mas custava caminho de SVG,
+ * memória e, sobretudo, tempo de recálculo quando a área muda de tamanho.
+ * 280 dá um ponto a cada ~3px, que é indistinguível a olho e corta quase pela
+ * metade o trabalho de redesenhar.
+ */
+export const PONTOS_NO_GRAFICO = 280;

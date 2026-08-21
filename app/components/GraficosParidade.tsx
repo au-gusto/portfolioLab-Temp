@@ -80,7 +80,7 @@ export default function GraficosParidade({ alocacao }: Props) {
           {ultimo && <span className="tabular">{mesAno(ultimo.data)}</span>}
         </p>
         <div className="grafico--baixo" style={{ width: "100%" }}>
-          <ResponsiveContainer>
+          <ResponsiveContainer debounce={120}>
             <PieChart>
               <Pie
                 data={pizza}
@@ -114,7 +114,7 @@ export default function GraficosParidade({ alocacao }: Props) {
           <span>Evolução da alocação</span>
         </p>
         <div className="grafico--baixo" style={{ width: "100%" }}>
-          <ResponsiveContainer>
+          <ResponsiveContainer debounce={120}>
             <AreaChart data={evolucao} margin={{ top: 4, right: 8, bottom: 0, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--borda)" vertical={false} />
               <XAxis
