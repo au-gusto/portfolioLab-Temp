@@ -146,24 +146,24 @@ img, video { max-width: 100%; height: auto; }
   --texto: #131A24;
   --texto-suave: #55636F;
 
-  --primaria: #4F46E5;
-  --primaria-forte: #4338CA;
+  --primaria: #0F766E;
+  --primaria-forte: #115E59;
   --sobre-primaria: #FFFFFF;
   --secundaria: #16A34A;
   --secundaria-forte: #15803D;
 
   /* O logo guarda o degradê da marca; o botão é verde, porque "executar" e
      "identidade" são coisas diferentes e não precisam da mesma cor. */
-  --grad-logo: linear-gradient(135deg, #4F46E5 0%, #6366F1 55%, #0EA5E9 100%);
-  --grad-marca: linear-gradient(115deg, #4F46E5 0%, #0EA5E9 48%, #0D9488 100%);
+  --grad-logo: linear-gradient(135deg, #0F766E 0%, #059669 55%, #65A30D 100%);
+  --grad-marca: linear-gradient(115deg, #0F766E 0%, #059669 48%, #65A30D 100%);
   --grad-acao: linear-gradient(135deg, #047857 0%, #10B981 100%);
-  --grad-fio: linear-gradient(90deg, transparent, #4F46E5 18%, #0EA5E9 50%, #0D9488 82%, transparent);
+  --grad-fio: linear-gradient(90deg, transparent, #0F766E 18%, #059669 50%, #65A30D 82%, transparent);
 
   --vidro: rgba(255, 255, 255, 0.72);
-  --halo: rgba(79, 70, 229, 0.18);
-  --halo-forte: rgba(79, 70, 229, 0.30);
-  --brilho: 0 6px 18px rgba(79, 70, 229, 0.26);
-  --brilho-forte: 0 8px 26px rgba(79, 70, 229, 0.38);
+  --halo: rgba(15, 118, 110, 0.18);
+  --halo-forte: rgba(15, 118, 110, 0.30);
+  --brilho: 0 6px 18px rgba(15, 118, 110, 0.26);
+  --brilho-forte: 0 8px 26px rgba(15, 118, 110, 0.30);
   --brilho-acao: 0 6px 18px rgba(5, 150, 105, 0.30);
   --brilho-acao-forte: 0 8px 26px rgba(5, 150, 105, 0.42);
 
@@ -173,15 +173,15 @@ img, video { max-width: 100%; height: auto; }
   --positivo: #047857;
   --negativo: #B91C1C;
   --atencao: #B45309;
-  --info: #0284C7;
+  --info: #0D9488;
 
   --atencao-fundo: rgba(180, 83, 9, 0.10);
-  --info-fundo: rgba(2, 132, 199, 0.09);
+  --info-fundo: rgba(13, 148, 136, 0.10);
   --negativo-fundo: rgba(220, 38, 38, 0.09);
 
   /* Séries dos gráficos: matizes bem separados e cromas altos. O CDI é o único
      de propósito apagado — é régua, não competidor. */
-  --serie-paridade: #4338CA;
+  --serie-paridade: #0F766E;
   --serie-cdi: #475569;
   --serie-eficiente: #059669;
   --serie-ingenua: #EA580C;
@@ -192,14 +192,14 @@ img, video { max-width: 100%; height: auto; }
 
   /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
      para nenhum parecer mais importante só por ser mais claro. */
-  --cat-1: #4F46E5;
-  --cat-2: #059669;
-  --cat-3: #EA580C;
-  --cat-4: #DC2626;
-  --cat-5: #7C3AED;
-  --cat-6: #0284C7;
+  --cat-1: #0F766E;
+  --cat-2: #EA580C;
+  --cat-3: #DC2626;
+  --cat-4: #7C3AED;
+  --cat-5: #65A30D;
+  --cat-6: #0891B2;
   --cat-7: #DB2777;
-  --cat-8: #65A30D;
+  --cat-8: #92400E;
 
   /* Opacidade das linhas de benchmark. No claro elas vão a cheio: o tracejado
      já basta para separá-las das estratégias. */
@@ -213,7 +213,7 @@ img, video { max-width: 100%; height: auto; }
   --raio-p: 9px;
 
   --sombra: 0 1px 2px rgba(20, 40, 32, 0.05), 0 10px 30px rgba(24, 52, 44, 0.08);
-  --sombra-cor: 0 1px 2px rgba(79, 70, 229, 0.08), 0 12px 32px rgba(79, 70, 229, 0.13);
+  --sombra-cor: 0 1px 2px rgba(15, 118, 110, 0.08), 0 12px 32px rgba(15, 118, 110, 0.13);
 }
 
 /* ══ PALETA ESCURA ═══════════════════════════════════════════════════════════
@@ -234,43 +234,43 @@ img, video { max-width: 100%; height: auto; }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --fundo: #0B0E13;
-    --fundo-card: #12161D;
-    --fundo-elevado: #1A1F28;
-    --borda: #262D38;
-    --borda-suave: #1C222B;
-    --texto: #C5CDD6;
-    --texto-suave: #78838F;
+    --fundo: #0A0F0C;
+    --fundo-card: #111811;
+    --fundo-elevado: #19221A;
+    --borda: #26332A;
+    --borda-suave: #1B241C;
+    --texto: #C7D2C8;
+    --texto-suave: #7C8A7E;
 
-    --primaria: #4E9DAB;
-    --primaria-forte: #66B4C2;
-    --sobre-primaria: #06161A;
+    --primaria: #4E9E80;
+    --primaria-forte: #6BB89A;
+    --sobre-primaria: #06170F;
     --secundaria: #4E9E78;
     --secundaria-forte: #6BB392;
 
-    --grad-logo: linear-gradient(135deg, #3F9DB0 0%, #7C6FB0 52%, #82A056 100%);
-    --grad-marca: linear-gradient(115deg, #4A9CAC 0%, #8478B0 52%, #869E5E 100%);
+    --grad-logo: linear-gradient(135deg, #3F9D7A 0%, #5AA86A 52%, #8CA858 100%);
+    --grad-marca: linear-gradient(115deg, #4A9C7C 0%, #63A76E 52%, #8FA65E 100%);
     --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
-    --grad-fio: linear-gradient(90deg, transparent, #3F9DB0 18%, #7C6FB0 50%, #82A056 82%, transparent);
+    --grad-fio: linear-gradient(90deg, transparent, #3F9D7A 18%, #5AA86A 50%, #8CA858 82%, transparent);
 
-    --vidro: rgba(18, 22, 29, 0.76);
-    --halo: rgba(78, 157, 171, 0.16);
-    --halo-forte: rgba(78, 157, 171, 0.26);
-    --brilho: 0 0 16px rgba(78, 157, 171, 0.18);
-    --brilho-forte: 0 0 22px rgba(78, 157, 171, 0.28);
+    --vidro: rgba(17, 24, 17, 0.78);
+    --halo: rgba(78, 158, 128, 0.16);
+    --halo-forte: rgba(78, 158, 128, 0.26);
+    --brilho: 0 0 16px rgba(78, 158, 128, 0.18);
+    --brilho-forte: 0 0 22px rgba(78, 158, 128, 0.28);
     --brilho-acao: 0 0 12px rgba(62, 138, 103, 0.18);
     --brilho-acao-forte: 0 0 18px rgba(62, 138, 103, 0.28);
 
     --positivo: #52A37B;
     --negativo: #C0787E;
     --atencao: #B39154;
-    --info: #5B8CAD;
+    --info: #56A18C;
 
     --atencao-fundo: rgba(179, 145, 84, 0.10);
-    --info-fundo: rgba(91, 140, 173, 0.10);
+    --info-fundo: rgba(86, 161, 140, 0.11);
     --negativo-fundo: rgba(192, 120, 126, 0.10);
 
-    --serie-paridade: #4FA3B5;
+    --serie-paridade: #4E9E80;
     --serie-cdi: #6C7885;
     --serie-eficiente: #529E76;
     --serie-ingenua: #B08F4E;
@@ -279,61 +279,61 @@ img, video { max-width: 100%; height: auto; }
     --serie-poupanca: #879B58;
     --serie-minvar: #B0759B;
 
-    --cat-1: #4FA3B5;
-    --cat-2: #529E76;
-    --cat-3: #B08F4E;
-    --cat-4: #B57279;
-    --cat-5: #8A7BB2;
-    --cat-6: #5B8CAD;
+    --cat-1: #4E9E80;
+    --cat-2: #B08F4E;
+    --cat-3: #B57279;
+    --cat-4: #8A7BB2;
+    --cat-5: #879B58;
+    --cat-6: #4E8FA0;
     --cat-7: #AE7096;
-    --cat-8: #879B58;
+    --cat-8: #A0785C;
 
     --opacidade-benchmark: 0.9;
 
     --sombra: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(0, 0, 0, 0.5);
-    --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(78, 157, 171, 0.07);
+    --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(78, 158, 128, 0.07);
   }
 }
 
 /* Escolha explícita do usuário vence o sistema, nos dois sentidos. */
 :root[data-tema="escuro"] {
-  --fundo: #0B0E13;
-  --fundo-card: #12161D;
-  --fundo-elevado: #1A1F28;
-  --borda: #262D38;
-  --borda-suave: #1C222B;
-  --texto: #C5CDD6;
-  --texto-suave: #78838F;
+  --fundo: #0A0F0C;
+  --fundo-card: #111811;
+  --fundo-elevado: #19221A;
+  --borda: #26332A;
+  --borda-suave: #1B241C;
+  --texto: #C7D2C8;
+  --texto-suave: #7C8A7E;
 
-  --primaria: #4E9DAB;
-  --primaria-forte: #66B4C2;
-  --sobre-primaria: #06161A;
+  --primaria: #4E9E80;
+  --primaria-forte: #6BB89A;
+  --sobre-primaria: #06170F;
   --secundaria: #4E9E78;
   --secundaria-forte: #6BB392;
 
-  --grad-logo: linear-gradient(135deg, #3F9DB0 0%, #7C6FB0 52%, #82A056 100%);
-  --grad-marca: linear-gradient(115deg, #4A9CAC 0%, #8478B0 52%, #869E5E 100%);
+  --grad-logo: linear-gradient(135deg, #3F9D7A 0%, #5AA86A 52%, #8CA858 100%);
+  --grad-marca: linear-gradient(115deg, #4A9C7C 0%, #63A76E 52%, #8FA65E 100%);
   --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
-  --grad-fio: linear-gradient(90deg, transparent, #3F9DB0 18%, #7C6FB0 50%, #82A056 82%, transparent);
+  --grad-fio: linear-gradient(90deg, transparent, #3F9D7A 18%, #5AA86A 50%, #8CA858 82%, transparent);
 
-  --vidro: rgba(18, 22, 29, 0.76);
-  --halo: rgba(78, 157, 171, 0.16);
-  --halo-forte: rgba(78, 157, 171, 0.26);
-  --brilho: 0 0 16px rgba(78, 157, 171, 0.18);
-  --brilho-forte: 0 0 22px rgba(78, 157, 171, 0.28);
+  --vidro: rgba(17, 24, 17, 0.78);
+  --halo: rgba(78, 158, 128, 0.16);
+  --halo-forte: rgba(78, 158, 128, 0.26);
+  --brilho: 0 0 16px rgba(78, 158, 128, 0.18);
+  --brilho-forte: 0 0 22px rgba(78, 158, 128, 0.28);
   --brilho-acao: 0 0 12px rgba(62, 138, 103, 0.18);
   --brilho-acao-forte: 0 0 18px rgba(62, 138, 103, 0.28);
 
   --positivo: #52A37B;
   --negativo: #C0787E;
   --atencao: #B39154;
-  --info: #5B8CAD;
+  --info: #56A18C;
 
   --atencao-fundo: rgba(179, 145, 84, 0.10);
-  --info-fundo: rgba(91, 140, 173, 0.10);
+  --info-fundo: rgba(86, 161, 140, 0.11);
   --negativo-fundo: rgba(192, 120, 126, 0.10);
 
-  --serie-paridade: #4FA3B5;
+  --serie-paridade: #4E9E80;
   --serie-cdi: #6C7885;
   --serie-eficiente: #529E76;
   --serie-ingenua: #B08F4E;
@@ -342,19 +342,19 @@ img, video { max-width: 100%; height: auto; }
   --serie-poupanca: #879B58;
   --serie-minvar: #B0759B;
 
-  --cat-1: #4FA3B5;
-  --cat-2: #529E76;
-  --cat-3: #B08F4E;
-  --cat-4: #B57279;
-  --cat-5: #8A7BB2;
-  --cat-6: #5B8CAD;
+  --cat-1: #4E9E80;
+  --cat-2: #B08F4E;
+  --cat-3: #B57279;
+  --cat-4: #8A7BB2;
+  --cat-5: #879B58;
+  --cat-6: #4E8FA0;
   --cat-7: #AE7096;
-  --cat-8: #879B58;
+  --cat-8: #A0785C;
 
   --opacidade-benchmark: 0.9;
 
   --sombra: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(0, 0, 0, 0.5);
-  --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(78, 157, 171, 0.07);
+  --sombra-cor: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px rgba(78, 158, 128, 0.07);
 }
 
 * { box-sizing: border-box; }
@@ -2072,28 +2072,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   overflow: hidden;
 }
 
-.codigo-caixa__expandir {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--borda);
-  border-radius: 6px;
-  background: var(--fundo-card);
-  color: var(--texto-suave);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.14s, color 0.14s, border-color 0.14s;
-}
-.codigo-caixa:hover .codigo-caixa__expandir,
-.codigo-caixa__expandir:focus-visible { opacity: 1; }
-.codigo-caixa__expandir:hover { color: var(--secundaria); border-color: var(--secundaria); }
-
+.codigo-caixa:hover 
 .codigo-caixa__ausente {
   display: flex;
   align-items: center;
@@ -2198,37 +2177,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .py-decorador  { color: var(--serie-ipca); }
 .py-operador   { color: var(--texto-suave); }
 
-/* ── Tela cheia ──────────────────────────────────────────────────────────── */
-.codigo-cheia {
-  position: fixed;
-  inset: 0;
-  z-index: 400;
-  background: var(--fundo);
-  display: flex;
-  flex-direction: column;
-}
 
-.codigo-cheia__topo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--borda);
-  background: var(--fundo-card);
-  flex-shrink: 0;
-}
-.codigo-cheia__titulo {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-.codigo-cheia__contagem {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--texto-suave);
-}
-.codigo-cheia__corpo { flex: 1; min-height: 0; }
 
 /* ══ PUXADOR DA LATERAL ══════════════════════════════════════════════════════
    Botão redondo na costura entre a configuração e os resultados. A faixa em
@@ -2411,18 +2360,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   color: var(--texto);
 }
 
-.grupo-codigo__nota {
-  font-size: 10.5px;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--texto-suave);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .grupo-codigo__contagem {
   margin-left: auto;
   font-size: 11px;
@@ -2506,4 +2443,151 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   outline: 2px solid var(--primaria);
   outline-offset: 2px;
   border-radius: 3px;
+}
+
+/* ══ PUXADOR MAIOR, COM VIDA ═════════════════════════════════════════════════
+   30px era alvo pequeno demais para algo que só aparece ao passar perto. A
+   pulsação existe só enquanto o ponteiro está na vizinhança: ela chama o olho
+   no momento em que a pessoa poderia não ter notado que o botão existe, e
+   para assim que ela chega nele — animação que não termina vira ruído. */
+
+.puxador {
+  width: 38px;
+  height: 38px;
+  left: -19px;
+  transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1),
+              color 0.14s, border-color 0.14s, box-shadow 0.18s;
+}
+
+.corpo:hover .puxador {
+  opacity: 0.7;
+  transform: scale(1);
+  animation: puxador-respira 2.2s ease-in-out infinite;
+}
+
+.puxador:hover,
+.puxador:focus-visible {
+  opacity: 1;
+  transform: scale(1.12);
+  animation: none;
+  box-shadow: var(--brilho);
+}
+
+.puxador-zona--recolhida .puxador { opacity: 1; animation: none; }
+
+@keyframes puxador-respira {
+  0%, 100% { box-shadow: var(--sombra); }
+  50%      { box-shadow: var(--sombra), 0 0 0 6px var(--halo); }
+}
+
+/* ══ ENTRADA E SAÍDA DA GAVETA DE CÓDIGO ═════════════════════════════════════
+   Ela cobre metade da tela; aparecer de um quadro para o outro faz parecer
+   que a página trocou. O deslize diz de onde ela veio e para onde volta. */
+
+.gaveta-codigo {
+  animation: gaveta-entra 0.24s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+@keyframes gaveta-entra {
+  from { transform: translateX(18px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ══ MODAL DO CÓDIGO ═════════════════════════════════════════════════════════ */
+
+.codigo-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in oklab, var(--fundo) 74%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: fundo-entra 0.18s ease;
+}
+
+@keyframes fundo-entra { from { opacity: 0; } to { opacity: 1; } }
+
+.codigo-modal {
+  width: 70vw;
+  height: 70vh;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  animation: modal-entra 0.22s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+@keyframes modal-entra {
+  from { transform: scale(0.97) translateY(8px); opacity: 0; }
+  to   { transform: scale(1) translateY(0);      opacity: 1; }
+}
+
+.codigo-modal__topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--borda-suave);
+  flex-shrink: 0;
+}
+.codigo-modal__titulo { font-size: 14.5px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.codigo-modal__contagem { margin-left: auto; font-size: 12px; color: var(--texto-suave); }
+.codigo-modal__corpo { flex: 1; min-height: 0; }
+
+/* Dentro do modal as ferramentas ficam no cabeçalho, não flutuando. */
+.codigo-modal__topo .codigo-caixa__ferramentas {
+  position: static;
+  opacity: 1;
+}
+
+/* ══ FERRAMENTAS DO CÓDIGO ═══════════════════════════════════════════════════ */
+
+.codigo-caixa__ferramentas {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 3;
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.14s;
+}
+.codigo-caixa:hover .codigo-caixa__ferramentas,
+.codigo-caixa__ferramentas:focus-within { opacity: 1; }
+
+.codigo-caixa__acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--fundo-card);
+  color: var(--texto-suave);
+  cursor: pointer;
+  transition: color 0.14s, border-color 0.14s, background 0.14s;
+}
+.codigo-caixa__acao:hover {
+  color: var(--secundaria);
+  border-color: var(--secundaria);
+  background: color-mix(in oklab, var(--secundaria) 10%, var(--fundo-card));
+}
+
+@media (max-width: 900px) {
+  .codigo-modal { width: 94vw; height: 88vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gaveta-codigo, .codigo-fundo, .codigo-modal { animation: none; }
+  .corpo:hover .puxador { animation: none; }
+  .puxador:hover, .puxador:focus-visible { transform: scale(1); }
 }

@@ -32,7 +32,6 @@ export default function PainelEditores({
   // Grupos começam abertos: quem entra aqui quer ver o código, e obrigar dois
   // cliques para chegar nele seria trocar poluição por atrito.
   const [gruposFechados, setGruposFechados] = useState<string[]>([]);
-  const [copiado, setCopiado] = useState<string | null>(null);
 
   if (!aberto) return null;
 
@@ -44,15 +43,6 @@ export default function PainelEditores({
     setGruposFechados((g) => (g.includes(titulo) ? g.filter((x) => x !== titulo) : [...g, titulo]));
   }
 
-  async function copiar(id: string) {
-    try {
-      await navigator.clipboard.writeText(codigos[id] ?? "");
-      setCopiado(id);
-      setTimeout(() => setCopiado(null), 1600);
-    } catch {
-      /* área de transferência bloqueada: o texto segue selecionável */
-    }
-  }
 
   /**
    * Três grupos, não dois.
@@ -62,22 +52,10 @@ export default function PainelEditores({
    * de abrir qualquer uma, onde é que dá para mexer.
    */
   const doGrupoEstrategia = doGrupo("estrategia", modo, lista);
-  const grupos: { titulo: string; nota: string; itens: MetaEstrategia[] }[] = [
-    {
-      titulo: "Estratégias",
-      nota: "as nossas — alocam os ativos escolhidos",
-      itens: doGrupoEstrategia.filter((e) => !e.doUsuario),
-    },
-    {
-      titulo: "Benchmarks",
-      nota: "referências de mercado, não usam a carteira",
-      itens: doGrupo("benchmark", modo, lista),
-    },
-    {
-      titulo: "Autorais",
-      nota: "suas — as únicas editáveis aqui",
-      itens: doGrupoEstrategia.filter((e) => e.doUsuario),
-    },
+  const grupos: { titulo: string; itens: MetaEstrategia[] }[] = [
+    { titulo: "Estratégias", itens: doGrupoEstrategia.filter((e) => !e.doUsuario) },
+    { titulo: "Benchmarks", itens: doGrupo("benchmark", modo, lista) },
+    { titulo: "Autorais", itens: doGrupoEstrategia.filter((e) => e.doUsuario) },
   ].filter((g) => g.itens.length > 0);
 
   return (
@@ -106,7 +84,6 @@ export default function PainelEditores({
               tamanho={13}
             />
             {grupo.titulo}
-            <span className="grupo-codigo__nota">{grupo.nota}</span>
             <span className="tabular grupo-codigo__contagem">{grupo.itens.length}</span>
           </button>
 
@@ -133,9 +110,6 @@ export default function PainelEditores({
               </button>
 
               <span className="editor__acoes">
-                <button className="acao-mini" onClick={() => copiar(e.id)} title="Copiar código">
-                  <Icone nome={copiado === e.id ? "check" : "duplicar"} tamanho={13} />
-                </button>
                 {e.doUsuario ? (
                   <button
                     className="acao-mini acao-mini--perigo"
