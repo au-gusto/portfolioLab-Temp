@@ -192,14 +192,14 @@ img, video { max-width: 100%; height: auto; }
 
   /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
      para nenhum parecer mais importante só por ser mais claro. */
-  --cat-1: #0F766E;
-  --cat-2: #EA580C;
-  --cat-3: #DC2626;
-  --cat-4: #7C3AED;
-  --cat-5: #65A30D;
+  --cat-1: #0A9E7E;
+  --cat-2: #D97706;
+  --cat-3: #D91E5B;
+  --cat-4: #6D28D9;
+  --cat-5: #5A9E0C;
   --cat-6: #0891B2;
-  --cat-7: #DB2777;
-  --cat-8: #92400E;
+  --cat-7: #DC2626;
+  --cat-8: #A21CAF;
 
   /* Opacidade das linhas de benchmark. No claro elas vão a cheio: o tracejado
      já basta para separá-las das estratégias. */
@@ -279,14 +279,14 @@ img, video { max-width: 100%; height: auto; }
     --serie-poupanca: #B6D94A;
     --serie-minvar: #F06DB0;
 
-    --cat-1: #4E9E80;
-    --cat-2: #B08F4E;
-    --cat-3: #B57279;
-    --cat-4: #8A7BB2;
-    --cat-5: #879B58;
-    --cat-6: #4E8FA0;
-    --cat-7: #AE7096;
-    --cat-8: #A0785C;
+    --cat-1: #2ED3A7;
+    --cat-2: #F5B033;
+    --cat-3: #FF6B8A;
+    --cat-4: #B18AFF;
+    --cat-5: #C3E838;
+    --cat-6: #2FC8E8;
+    --cat-7: #FF7A45;
+    --cat-8: #F45DC0;
 
     --opacidade-benchmark: 0.9;
 
@@ -342,14 +342,14 @@ img, video { max-width: 100%; height: auto; }
   --serie-poupanca: #B6D94A;
   --serie-minvar: #F06DB0;
 
-  --cat-1: #4E9E80;
-  --cat-2: #B08F4E;
-  --cat-3: #B57279;
-  --cat-4: #8A7BB2;
-  --cat-5: #879B58;
-  --cat-6: #4E8FA0;
-  --cat-7: #AE7096;
-  --cat-8: #A0785C;
+  --cat-1: #2ED3A7;
+  --cat-2: #F5B033;
+  --cat-3: #FF6B8A;
+  --cat-4: #B18AFF;
+  --cat-5: #C3E838;
+  --cat-6: #2FC8E8;
+  --cat-7: #FF7A45;
+  --cat-8: #F45DC0;
 
   --opacidade-benchmark: 0.9;
 
