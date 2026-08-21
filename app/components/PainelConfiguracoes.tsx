@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { doGrupo, type MetaEstrategia } from "../lib/estrategias-meta";
 import type { Preferencias } from "../lib/preferencias";
 import type { TickerSemDados } from "../lib/fonte-dados";
@@ -55,6 +55,43 @@ export default function PainelConfiguracoes({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const buscaRef = useRef<HTMLDivElement>(null);
+  const chipsRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Onde a grade de chips estava, em pixels de tela, antes da última mudança.
+   *
+   * Escolher um ativo faz a lista de escolhidos crescer ACIMA da grade, e a
+   * grade desce junto — o chip que estava sob o cursor sai de baixo dele e a
+   * pessoa perde o lugar na lista de 99 códigos. Guardar a posição antes e
+   * devolvê-la depois faz a grade parecer parada, que é o que ela deveria
+   * parecer: quem mudou de tamanho foi a lista de cima, não ela.
+   */
+  const ancoraDosChips = useRef<number | null>(null);
+
+  function marcarAncora() {
+    ancoraDosChips.current = chipsRef.current?.getBoundingClientRect().top ?? null;
+  }
+
+  // useLayoutEffect e não useEffect: o ajuste precisa acontecer ANTES do
+  // navegador pintar, senão o salto aparece e depois é desfeito, piscando.
+  useLayoutEffect(() => {
+    if (ancoraDosChips.current === null) return;
+    const antes = ancoraDosChips.current;
+    ancoraDosChips.current = null;
+
+    const grade = chipsRef.current;
+    if (!grade) return;
+    const deslocamento = grade.getBoundingClientRect().top - antes;
+    if (Math.abs(deslocamento) < 0.5) return;
+
+    // No desktop quem rola é a lateral; no celular, a janela.
+    const lateral = grade.closest(".lateral");
+    if (lateral && lateral.scrollHeight > lateral.clientHeight) {
+      lateral.scrollTop += deslocamento;
+    } else {
+      window.scrollBy(0, deslocamento);
+    }
+  });
 
   const mortos = useMemo(
     () => new Map(tickersSemDados.map((t) => [t.ticker, t.ultimoPregaoReal])),
@@ -62,6 +99,7 @@ export default function PainelConfiguracoes({
   );
 
   function alternarTicker(ticker: string) {
+    marcarAncora();
     mudar("ativos", prefs.ativos.includes(ticker)
       ? prefs.ativos.filter((t) => t !== ticker)
       : [...prefs.ativos, ticker]);
@@ -467,7 +505,7 @@ export default function PainelConfiguracoes({
         </button>
 
         {verTodos && (
-          <div className="chips" style={{ maxHeight: "260px", overflowY: "auto" }}>
+          <div className="chips" ref={chipsRef} style={{ maxHeight: "260px", overflowY: "auto" }}>
             {tickers.map((t) => (
               <button
                 key={t}

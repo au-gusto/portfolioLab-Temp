@@ -47,7 +47,31 @@ export default function PainelEditores({
     }
   }
 
-  const series = [...doGrupo("estrategia", modo, lista), ...doGrupo("benchmark", modo, lista)];
+  /**
+   * Três grupos, não dois.
+   *
+   * O que o usuário escreveu é a única coisa editável da lista, e ficava
+   * misturada às nossas — que abrem em só leitura. Separar deixa claro, antes
+   * de abrir qualquer uma, onde é que dá para mexer.
+   */
+  const doGrupoEstrategia = doGrupo("estrategia", modo, lista);
+  const grupos: { titulo: string; nota: string; itens: MetaEstrategia[] }[] = [
+    {
+      titulo: "Estratégias",
+      nota: "as nossas — alocam os ativos escolhidos",
+      itens: doGrupoEstrategia.filter((e) => !e.doUsuario),
+    },
+    {
+      titulo: "Benchmarks",
+      nota: "referências de mercado, não usam a carteira",
+      itens: doGrupo("benchmark", modo, lista),
+    },
+    {
+      titulo: "Autorais",
+      nota: "suas — as únicas editáveis aqui",
+      itens: doGrupoEstrategia.filter((e) => e.doUsuario),
+    },
+  ].filter((g) => g.itens.length > 0);
 
   return (
     <div role="dialog" aria-label="Código das estratégias" className="gaveta-codigo">
@@ -63,7 +87,15 @@ export default function PainelEditores({
         </button>
       </div>
 
-      {series.map((e) => {
+      {grupos.map((grupo) => (
+        <section key={grupo.titulo} className="grupo-codigo">
+          <p className="grupo-codigo__titulo">
+            {grupo.titulo}
+            <span className="grupo-codigo__nota">{grupo.nota}</span>
+            <span className="tabular grupo-codigo__contagem">{grupo.itens.length}</span>
+          </p>
+
+          {grupo.itens.map((e) => {
         const estaAberto = abertos.includes(e.id);
         return (
           <div key={e.id} className="editor">
@@ -142,7 +174,9 @@ export default function PainelEditores({
             )}
           </div>
         );
-      })}
+          })}
+        </section>
+      ))}
     </div>
   );
 }
