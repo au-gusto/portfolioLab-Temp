@@ -28,7 +28,6 @@ interface Props {
   tickersSemDados: TickerSemDados[];
   onSimular: () => Promise<void>;
   onCriarEstrategia: () => void;
-  onDuplicar: (base: MetaEstrategia) => void;
   onAbrirEditor: () => void;
   pythonPronto: boolean;
   pctCarregamento: number;
@@ -44,7 +43,7 @@ export default function PainelConfiguracoes({
   tickers, base, temBasePropria, laudoBase,
   onTrocarBase, onSubirBase, ativosSemHistorico,
   lista, prefs, mudar, tickersSemDados,
-  onSimular, onCriarEstrategia, onDuplicar, onAbrirEditor,
+  onSimular, onCriarEstrategia, onAbrirEditor,
   pythonPronto, pctCarregamento, simulando,
 }: Props) {
   const [filtro, setFiltro] = useState("");
@@ -100,7 +99,21 @@ export default function PainelConfiguracoes({
 
   function alternarTicker(ticker: string) {
     marcarAncora();
-    mudar("ativos", prefs.ativos.includes(ticker)
+    const tinha = prefs.ativos.includes(ticker);
+
+    if (tinha) {
+      // Sair da carteira apaga também o peso de risco.
+      //
+      // Antes o valor ficava guardado: quem tirasse um ativo com peso 2 e o
+      // recolocasse depois recebia o 2 de volta sem nada na tela avisando —
+      // e o gráfico saía de uma configuração que a pessoa não lembrava de ter
+      // pedido. Um ativo que não está na carteira não tem orçamento.
+      const { [ticker]: _removido, ...resto } = prefs.orcamento;
+      void _removido;
+      mudar("orcamento", resto);
+    }
+
+    mudar("ativos", tinha
       ? prefs.ativos.filter((t) => t !== ticker)
       : [...prefs.ativos, ticker]);
   }
@@ -177,14 +190,6 @@ export default function PainelConfiguracoes({
               >
                 <Icone nome="codigo" tamanho={13} />
               </button>
-              <button
-                className="acao-mini"
-                onClick={() => onDuplicar(e)}
-                aria-label={`Duplicar ${e.titulo}`}
-                title="Duplicar para editar"
-              >
-                <Icone nome="duplicar" tamanho={13} />
-              </button>
             </span>
           )}
         </div>
@@ -225,10 +230,12 @@ export default function PainelConfiguracoes({
             <Icone nome="calendario" tamanho={13} />
             Período
           </span>
-          <Ajuda alinhar="direita">
-            O rebalanceamento é mensal, então a simulação começa no primeiro dia 1º
-            depois de {formatarBR(prefs.dataInicio)}, e o último mês vai até a data de fim.
-          </Ajuda>
+          <span className="secao__acoes">
+            <Ajuda alinhar="direita">
+              O rebalanceamento é mensal, então a simulação começa no primeiro dia 1º
+              depois de {formatarBR(prefs.dataInicio)}, e o último mês vai até a data de fim.
+            </Ajuda>
+          </span>
         </p>
         <div className="linha-2">
           <div>
@@ -252,10 +259,12 @@ export default function PainelConfiguracoes({
               <Icone nome="carteira" tamanho={13} />
               Aportes
             </span>
-            <Ajuda alinhar="direita">
-              O aporte inicial entra no primeiro mês simulado; o mensal, em todos
-              os seguintes, sempre nos pesos que a estratégia calculou.
-            </Ajuda>
+            <span className="secao__acoes">
+              <Ajuda alinhar="direita">
+                O aporte inicial entra no primeiro mês simulado; o mensal, em todos
+                os seguintes, sempre nos pesos que a estratégia calculou.
+              </Ajuda>
+            </span>
           </p>
           <div className="linha-2">
             <div>
@@ -307,10 +316,12 @@ export default function PainelConfiguracoes({
             <Icone nome="tendencia" tamanho={13} />
             Benchmarks
           </span>
-          <Ajuda alinhar="direita">
-            Referências de mercado. Não usam os ativos escolhidos: aplicam a
-            ideia ingênua de comprar no início do período e não mexer.
-          </Ajuda>
+          <span className="secao__acoes">
+            <Ajuda alinhar="direita">
+              Referências de mercado. Não usam os ativos escolhidos: aplicam a
+              ideia ingênua de comprar no início do período e não mexer.
+            </Ajuda>
+          </span>
         </p>
         {listaDeSeries(benchmarks, false)}
       </div>

@@ -2431,3 +2431,79 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 }
 
 .grupo-codigo .editor + .editor { margin-top: 6px; }
+
+/* ══ MENOS MOLDURA NA LATERAL ════════════════════════════════════════════════
+   Havia 36 elementos com borda ali dentro, e 17 deles eram linhas de lista.
+   Linha de lista não é cartão: ela não precisa de moldura para existir, e
+   dezessete retângulos empilhados viram grade antes de virarem informação.
+
+   O que some é a borda; o que fica — e fica mais forte — é o sinal de
+   escolhido. Selecionado agora é NEGRITO mais um fundo discreto, que é o
+   padrão que a pessoa já reconhece de qualquer lista, e lê à distância melhor
+   do que um contorno de 1px. */
+
+.estrategia {
+  border: none;
+  padding: 8px 10px;
+}
+.estrategia:hover { background: var(--fundo-elevado); }
+.estrategia--marcada {
+  background: var(--fundo);
+  border: none;
+}
+.estrategia--marcada .estrategia__nome {
+  font-weight: 700;
+  color: var(--texto);
+}
+.estrategia__nome {
+  color: var(--texto-suave);
+  transition: color 0.12s, font-weight 0.12s;
+}
+
+/* A lista de escolhidos vira lista mesmo: um filete separando, não uma caixa
+   por item. */
+.ativo-linha {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 7px 10px;
+}
+.ativo-linha + .ativo-linha {
+  margin-top: 0;
+  border-top: 1px solid var(--borda-suave);
+}
+.ativo-linha:hover { background: var(--fundo); border-radius: var(--raio-p); }
+.ativo-linha:hover + .ativo-linha { border-top-color: transparent; }
+.ativo-linha__nome { font-weight: 700; color: var(--texto); }
+
+/* Ações pequenas só ganham contorno quando o ponteiro chega nelas. */
+.acao-mini { border-color: transparent; }
+.acao-mini:hover { border-color: var(--borda); }
+.acao-mini--codigo:hover { border-color: transparent; }
+
+/* A faixa de modo perde a caixa externa: as duas abas já se distinguem pelo
+   preenchimento da ativa. */
+.abas {
+  border: none;
+  background: var(--fundo);
+  padding: 3px;
+}
+
+/* O bloco de "meus dados" separava com tracejado; um filete basta. */
+.base-propria { border-top-style: solid; border-top-color: var(--borda-suave); }
+
+/* Cabeçalho de grupo no menu de código: agora é botão, precisa parecer um. */
+.grupo-codigo__titulo {
+  width: 100%;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: color 0.12s;
+}
+.grupo-codigo__titulo:hover { color: var(--primaria); }
+.grupo-codigo__titulo:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 2px;
+  border-radius: 3px;
+}

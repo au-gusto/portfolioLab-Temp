@@ -29,12 +29,19 @@ export default function PainelEditores({
   aberto, setPainelAberto, modo, lista, codigos, editarCodigo, renomear, remover, duplicar,
 }: Props) {
   const [abertos, setAbertos] = useState<string[]>([]);
+  // Grupos começam abertos: quem entra aqui quer ver o código, e obrigar dois
+  // cliques para chegar nele seria trocar poluição por atrito.
+  const [gruposFechados, setGruposFechados] = useState<string[]>([]);
   const [copiado, setCopiado] = useState<string | null>(null);
 
   if (!aberto) return null;
 
   function alternar(id: string) {
     setAbertos((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
+  }
+
+  function alternarGrupo(titulo: string) {
+    setGruposFechados((g) => (g.includes(titulo) ? g.filter((x) => x !== titulo) : [...g, titulo]));
   }
 
   async function copiar(id: string) {
@@ -89,13 +96,21 @@ export default function PainelEditores({
 
       {grupos.map((grupo) => (
         <section key={grupo.titulo} className="grupo-codigo">
-          <p className="grupo-codigo__titulo">
+          <button
+            className="grupo-codigo__titulo"
+            onClick={() => alternarGrupo(grupo.titulo)}
+            aria-expanded={!gruposFechados.includes(grupo.titulo)}
+          >
+            <Icone
+              nome={gruposFechados.includes(grupo.titulo) ? "expandir" : "recolher"}
+              tamanho={13}
+            />
             {grupo.titulo}
             <span className="grupo-codigo__nota">{grupo.nota}</span>
             <span className="tabular grupo-codigo__contagem">{grupo.itens.length}</span>
-          </p>
+          </button>
 
-          {grupo.itens.map((e) => {
+          {!gruposFechados.includes(grupo.titulo) && grupo.itens.map((e) => {
         const estaAberto = abertos.includes(e.id);
         return (
           <div key={e.id} className="editor">

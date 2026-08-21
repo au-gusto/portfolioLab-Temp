@@ -678,7 +678,6 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
             tickersSemDados={status.tickersSemDados}
             onSimular={simular}
             onCriarEstrategia={() => criarEstrategia()}
-            onDuplicar={criarEstrategia}
             onAbrirEditor={() => setPainelAberto(true)}
             pythonPronto={pythonPronto}
             pctCarregamento={carregamento?.pct ?? 0}
