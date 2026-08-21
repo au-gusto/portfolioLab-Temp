@@ -13,7 +13,7 @@ import {
 } from "../lib/pyodideLoader";
 import type { StatusDados } from "../lib/fonte-dados";
 import {
-  catalogo, doModo, nomeDaEstrategia, precisaDeAtivos, CORES_USUARIO,
+  catalogo, doModo, doGrupo, nomeDaEstrategia, precisaDeAtivos, CORES_USUARIO,
   type MetaEstrategia,
 } from "../lib/estrategias-meta";
 import {
@@ -39,7 +39,7 @@ import StatusSimulacao, { type EstadoEstrategia } from "./StatusSimulacao";
 import Grafico_aportes from "./Grafico";
 import Grafico_rentabilidade from "./Grafico - Rentabilidade";
 import GraficosParidade from "./GraficosParidade";
-import GraficoRisco, { type PontoRisco } from "./GraficoRisco";
+import GraficoRisco from "./GraficoRisco";
 import PainelMetricas from "./PainelMetricas";
 
 import { codigoCDI } from "../estrategias/cdi";
@@ -114,20 +114,6 @@ export interface AlocacaoMes {
   data: string;
   pesos: Record<string, number>;
   riscoAlvo: Record<string, number>;
-}
-
-/** O Python devolve uma lista de dicts; aqui ela vira o formato do gráfico. */
-function normalizarRisco(bruto: unknown): PontoRisco[] {
-  if (!Array.isArray(bruto)) return [];
-  return bruto
-    // `campo` e não `p.data`: o Pyodide entrega dict como Map quando as chaves
-    // não são todas string, e ler a propriedade direto devolvia undefined —
-    // o gráfico de risco simplesmente não aparecia, sem erro nenhum.
-    .map((p) => ({
-      data: String(campo(p, "data") ?? ""),
-      risco: Number(campo(p, "risco")),
-    }))
-    .filter((p) => p.data && Number.isFinite(p.risco));
 }
 
 function normalizarAlocacao(bruto: unknown): AlocacaoMes[] {
@@ -324,7 +310,6 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
 
   const [resultados, setResultados] = useState<Resultados>({});
   const [alocacaoParidade, setAlocacaoParidade] = useState<AlocacaoMes[]>([]);
-  const [riscoIngenua, setRiscoIngenua] = useState<PontoRisco[]>([]);
   const [ativosUsados, setAtivosUsados] = useState<string[]>([]);
 
   const [carregamento, setCarregamento] = useState<EstadoCarregamento | null>(null);
@@ -577,17 +562,6 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
         setAlocacaoParidade([]);
       }
 
-      if (aRodar.includes("ingenua") && novo.ingenua) {
-        try {
-          setRiscoIngenua(normalizarRisco(await lerVariavelPython("risco_mensal")));
-        } catch (e) {
-          console.error("Erro ao ler o risco da ingênua:", e);
-          setRiscoIngenua([]);
-        }
-      } else {
-        setRiscoIngenua([]);
-      }
-
       setConfigSimulacao({
         aporteInicial: prefs.aporteInicial,
         aportesMensal: prefs.aporteMensal,
@@ -611,6 +585,18 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
 
   const temResultado = Object.values(resultados).some((s) => s && s.length > 0);
   const seriesDoModo = doModo(modo, lista).map((e) => e.id);
+
+  /**
+   * Quem entra no gráfico de risco.
+   *
+   * Só estratégias, e só as que estão marcadas. Benchmark de série mensal
+   * (IPCA, poupança) é interpolado para o diário: medir volatilidade nele
+   * devolveria o artefato da interpolação, não risco de mercado.
+   */
+  const estrategiasDoModo = useMemo(
+    () => doGrupo("estrategia", modo, lista).filter((e) => marcados.includes(e.id)),
+    [modo, lista, marcados],
+  );
 
   /**
    * O que de fato vai rodar.
@@ -761,15 +747,21 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
                 />
               )}
 
-              <PainelMetricas series={seriesDoModo.map((id) => lista.find((e) => e.id === id)!).filter(Boolean)} dados={resultados} />
-
               {aRodar.includes("paridade") && alocacaoParidade.length > 0 && (
                 <GraficosParidade alocacao={alocacaoParidade} />
               )}
 
-              {aRodar.includes("ingenua") && riscoIngenua.length > 1 && (
-                <GraficoRisco risco={riscoIngenua} />
-              )}
+              {/* Risco e consistência dividem a linha: são a mesma pergunta em
+                  duas formas — o gráfico mostra o risco ao longo do tempo, a
+                  tabela resume o período inteiro. Empilhados, o segundo caía
+                  fora da tela e ninguém comparava um com o outro. */}
+              <div className="par-de-paineis">
+                <GraficoRisco series={estrategiasDoModo} dados={resultados} />
+                <PainelMetricas
+                  series={seriesDoModo.map((id) => lista.find((e) => e.id === id)!).filter(Boolean)}
+                  dados={resultados}
+                />
+              </div>
             </>
           )}
         </main>

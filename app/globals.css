@@ -181,14 +181,14 @@ img, video { max-width: 100%; height: auto; }
 
   /* Séries dos gráficos: matizes bem separados e cromas altos. O CDI é o único
      de propósito apagado — é régua, não competidor. */
-  --serie-paridade: #0F766E;
-  --serie-cdi: #475569;
-  --serie-eficiente: #059669;
-  --serie-ingenua: #EA580C;
-  --serie-ibov: #7C3AED;
-  --serie-ipca: #DC2626;
-  --serie-poupanca: #65A30D;
-  --serie-minvar: #DB2777;
+  --serie-paridade: #0D8A72;
+  --serie-cdi: #4A5A6A;
+  --serie-eficiente: #A16207;
+  --serie-ingenua: #E8620A;
+  --serie-ibov: #6D28D9;
+  --serie-ipca: #B91C1C;
+  --serie-poupanca: #4D7C0F;
+  --serie-minvar: #BE185D;
 
   /* Paleta categórica da alocação — um ativo por cor, luminosidade parecida
      para nenhum parecer mais importante só por ser mais claro. */
@@ -234,11 +234,11 @@ img, video { max-width: 100%; height: auto; }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --fundo: #0A0F0C;
-    --fundo-card: #111811;
-    --fundo-elevado: #19221A;
-    --borda: #26332A;
-    --borda-suave: #1B241C;
+    --fundo: #070A08;
+    --fundo-card: #0D120E;
+    --fundo-elevado: #151C16;
+    --borda: #222C24;
+    --borda-suave: #182018;
     --texto: #C7D2C8;
     --texto-suave: #7C8A7E;
 
@@ -253,7 +253,7 @@ img, video { max-width: 100%; height: auto; }
     --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
     --grad-fio: linear-gradient(90deg, transparent, #3F9D7A 18%, #5AA86A 50%, #8CA858 82%, transparent);
 
-    --vidro: rgba(17, 24, 17, 0.78);
+    --vidro: rgba(13, 18, 14, 0.80);
     --halo: rgba(78, 158, 128, 0.16);
     --halo-forte: rgba(78, 158, 128, 0.26);
     --brilho: 0 0 16px rgba(78, 158, 128, 0.18);
@@ -270,14 +270,14 @@ img, video { max-width: 100%; height: auto; }
     --info-fundo: rgba(86, 161, 140, 0.11);
     --negativo-fundo: rgba(192, 120, 126, 0.10);
 
-    --serie-paridade: #4E9E80;
-    --serie-cdi: #6C7885;
-    --serie-eficiente: #529E76;
-    --serie-ingenua: #B08F4E;
-    --serie-ibov: #8A7BB2;
-    --serie-ipca: #B57279;
-    --serie-poupanca: #879B58;
-    --serie-minvar: #B0759B;
+    --serie-paridade: #2ED3A7;
+    --serie-cdi: #7C8B99;
+    --serie-eficiente: #F0A93C;
+    --serie-ingenua: #FF7A45;
+    --serie-ibov: #A98BFF;
+    --serie-ipca: #FF6B6B;
+    --serie-poupanca: #B6D94A;
+    --serie-minvar: #F06DB0;
 
     --cat-1: #4E9E80;
     --cat-2: #B08F4E;
@@ -297,11 +297,11 @@ img, video { max-width: 100%; height: auto; }
 
 /* Escolha explícita do usuário vence o sistema, nos dois sentidos. */
 :root[data-tema="escuro"] {
-  --fundo: #0A0F0C;
-  --fundo-card: #111811;
-  --fundo-elevado: #19221A;
-  --borda: #26332A;
-  --borda-suave: #1B241C;
+  --fundo: #070A08;
+  --fundo-card: #0D120E;
+  --fundo-elevado: #151C16;
+  --borda: #222C24;
+  --borda-suave: #182018;
   --texto: #C7D2C8;
   --texto-suave: #7C8A7E;
 
@@ -316,7 +316,7 @@ img, video { max-width: 100%; height: auto; }
   --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
   --grad-fio: linear-gradient(90deg, transparent, #3F9D7A 18%, #5AA86A 50%, #8CA858 82%, transparent);
 
-  --vidro: rgba(17, 24, 17, 0.78);
+  --vidro: rgba(13, 18, 14, 0.80);
   --halo: rgba(78, 158, 128, 0.16);
   --halo-forte: rgba(78, 158, 128, 0.26);
   --brilho: 0 0 16px rgba(78, 158, 128, 0.18);
@@ -333,14 +333,14 @@ img, video { max-width: 100%; height: auto; }
   --info-fundo: rgba(86, 161, 140, 0.11);
   --negativo-fundo: rgba(192, 120, 126, 0.10);
 
-  --serie-paridade: #4E9E80;
-  --serie-cdi: #6C7885;
-  --serie-eficiente: #529E76;
-  --serie-ingenua: #B08F4E;
-  --serie-ibov: #8A7BB2;
-  --serie-ipca: #B57279;
-  --serie-poupanca: #879B58;
-  --serie-minvar: #B0759B;
+  --serie-paridade: #2ED3A7;
+  --serie-cdi: #7C8B99;
+  --serie-eficiente: #F0A93C;
+  --serie-ingenua: #FF7A45;
+  --serie-ibov: #A98BFF;
+  --serie-ipca: #FF6B6B;
+  --serie-poupanca: #B6D94A;
+  --serie-minvar: #F06DB0;
 
   --cat-1: #4E9E80;
   --cat-2: #B08F4E;
@@ -2591,3 +2591,29 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   .corpo:hover .puxador { animation: none; }
   .puxador:hover, .puxador:focus-visible { transform: scale(1); }
 }
+
+/* ══ DOIS PAINÉIS NA MESMA LINHA ═════════════════════════════════════════════
+   Risco ao longo do tempo e a tabela de consistência respondem à mesma
+   pergunta em formas diferentes — um mostra o percurso, o outro o resumo.
+   Empilhados, o segundo caía fora da tela e ninguém comparava um com o outro.
+
+   Abaixo de 1100px voltam a empilhar: dois gráficos de 400px lado a lado
+   deixam de ser comparação e viram duas tiras estreitas. */
+
+.par-de-paineis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .par-de-paineis { grid-template-columns: 1fr; }
+}
+
+/* Nessa largura os dois painéis ficam mais baixos: a informação é a forma da
+   curva e a ordem das linhas da tabela, não o detalhe fino. */
+.par-de-paineis .grafico--baixo { height: 240px; }
+.par-de-paineis .tabela-metricas { font-size: 12px; }
+.par-de-paineis .tabela-metricas th,
+.par-de-paineis .tabela-metricas td { padding: 6px 8px; }

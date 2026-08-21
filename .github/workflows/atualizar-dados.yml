@@ -35,6 +35,18 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      # A carteira do IBRX-100 é reavaliada pela B3 a cada quadrimestre. Este
+      # passo compara a composição de hoje com o cabeçalho do nosso CSV e sai
+      # dizendo "nada a fazer" quando são iguais — o que é o caso em
+      # praticamente todos os dias do ano.
+      #
+      # Quando um papel novo aparece, isso É o sinal de que o índice foi
+      # recalculado: quem entrou ganha coluna com histórico desde 2023, quem
+      # saiu tem a coluna movida para a base "Outros". O script recusa gravar
+      # se algum preço já existente mudar, então rodar todo dia é seguro.
+      - name: Sincronizar a carteira do IBRX-100, se a B3 mudou
+        run: node scripts/sincronizar-ibrx100.mjs
+
       - name: Buscar cotações e índices
         run: node scripts/atualizar-dados.mjs
 

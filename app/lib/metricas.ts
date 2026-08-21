@@ -124,3 +124,67 @@ export function calcular(serie: Ponto[] | null | undefined, cdi?: Ponto[] | null
     diasPositivos,
   };
 }
+
+/** Janela da volatilidade móvel, em pregões. Três meses: suave o bastante
+ *  para comparar curvas sem virar uma linha reta. */
+export const JANELA_RISCO = 63;
+
+export interface PontoRisco { data: string; risco: number }
+
+/**
+ * Volatilidade anualizada em janela móvel.
+ *
+ * É o risco REALIZADO, calculado do que a carteira de fato fez — diferente do
+ * risco que o otimizador estimou na hora de rebalancear. Para comparar
+ * estratégias é o número mais honesto: a Paridade promete manter a
+ * contribuição de risco equilibrada, e o que se quer ver é se a oscilação da
+ * carteira ficou mesmo mais estável do que a das outras.
+ *
+ * Sai da mesma série que o gráfico já usa, então serve para qualquer
+ * estratégia sem que nenhuma delas precise calcular nada em Python.
+ */
+export function volatilidadeMovel(
+  serie: Ponto[] | null | undefined,
+  janela = JANELA_RISCO,
+): PontoRisco[] {
+  if (!serie || serie.length < janela + 2) return [];
+
+  const diarios: { data: string; r: number }[] = [];
+  for (let i = 1; i < serie.length; i++) {
+    const antes = 1 + serie[i - 1].valor;
+    const agora = 1 + serie[i].valor;
+    if (antes > 0 && Number.isFinite(antes) && Number.isFinite(agora)) {
+      diarios.push({ data: serie[i].data, r: agora / antes - 1 });
+    }
+  }
+  if (diarios.length < janela) return [];
+
+  // Soma e soma dos quadrados deslizantes: a variância de cada janela sai em
+  // tempo constante, em vez de refazer a conta sobre 63 pontos a cada dia.
+  const saida: PontoRisco[] = [];
+  let soma = 0;
+  let somaQuadrados = 0;
+
+  for (let i = 0; i < diarios.length; i++) {
+    soma += diarios[i].r;
+    somaQuadrados += diarios[i].r * diarios[i].r;
+
+    if (i >= janela) {
+      const saiu = diarios[i - janela].r;
+      soma -= saiu;
+      somaQuadrados -= saiu * saiu;
+    }
+    if (i < janela - 1) continue;
+
+    const media = soma / janela;
+    const variancia = (somaQuadrados - janela * media * media) / (janela - 1);
+    if (variancia >= 0 && Number.isFinite(variancia)) {
+      saida.push({
+        data: diarios[i].data,
+        risco: Math.sqrt(variancia) * Math.sqrt(PREGOES_POR_ANO) * 100,
+      });
+    }
+  }
+
+  return saida;
+}
