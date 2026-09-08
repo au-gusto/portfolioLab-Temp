@@ -1,18 +1,18 @@
 {
-  "atualizadoEm": "2026-09-07T23:57:46.116Z",
+  "atualizadoEm": "2026-09-08T23:48:39.945Z",
   "ativos": {
-    "ultimoPregao": "2026-09-04",
+    "ultimoPregao": "2026-09-08",
     "tickers": 89
   },
   "ibrx100": {
-    "ultimoPregao": "2026-09-04",
+    "ultimoPregao": "2026-09-08",
     "tickers": 100
   },
   "cdi": {
     "ultimoDia": "04/09/2026"
   },
   "ibov": {
-    "ultimoPregao": "2026-09-04"
+    "ultimoPregao": "2026-09-08"
   },
   "indicesMensais": {
     "ultimoMes": "2026-07"
@@ -59,11 +59,11 @@
       "ultimoPregaoReal": "2026-09-04"
     },
     {
-      "ticker": "PETZ3",
+      "ticker": "NTCO3",
       "ultimoPregaoReal": "2026-09-04"
     },
     {
-      "ticker": "NTCO3",
+      "ticker": "PETZ3",
       "ultimoPregaoReal": "2026-09-04"
     },
     {
