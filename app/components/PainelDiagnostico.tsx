@@ -106,7 +106,7 @@ export default function PainelDiagnostico() {
           <Icone nome={copiado ? "check" : "duplicar"} tamanho={15} />
         </button>
         <button className="botao-icone" onClick={baixar} title="Baixar como .txt">
-          <Icone nome="grafico" tamanho={15} />
+          <Icone nome="baixar" tamanho={15} />
         </button>
         <button className="botao-icone" onClick={limparDiagnostico} title="Limpar">
           <Icone nome="lixeira" tamanho={15} />

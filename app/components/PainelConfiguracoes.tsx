@@ -208,7 +208,7 @@ export default function PainelConfiguracoes({
             onClick={() => mudar("modo", "rentabilidade")}
             title="Retorno acumulado da cota, sem depender de quanto você aportou"
           >
-            <Icone nome="tendencia" tamanho={15} />
+            <Icone nome="percentual" tamanho={15} />
             Rentabilidade
           </button>
           <button
@@ -217,7 +217,7 @@ export default function PainelConfiguracoes({
             onClick={() => mudar("modo", "aportes")}
             title="Evolução do patrimônio com aportes mensais"
           >
-            <Icone nome="carteira" tamanho={15} />
+            <Icone nome="patrimonio" tamanho={15} />
             Patrimônio
           </button>
         </div>
@@ -226,10 +226,7 @@ export default function PainelConfiguracoes({
       {/* ── Período ──────────────────────────────────────────────────────── */}
       <div className="secao">
         <p className="secao__titulo">
-          <span className="com-icone">
-            <Icone nome="calendario" tamanho={13} />
-            Período
-          </span>
+          <span>Período</span>
           <span className="secao__acoes">
             <Ajuda alinhar="direita">
               O rebalanceamento é mensal, então a simulação começa no primeiro dia 1º
@@ -255,10 +252,7 @@ export default function PainelConfiguracoes({
       {prefs.modo === "aportes" && (
         <div className="secao">
           <p className="secao__titulo">
-            <span className="com-icone">
-              <Icone nome="carteira" tamanho={13} />
-              Aportes
-            </span>
+            <span>Aportes</span>
             <span className="secao__acoes">
               <Ajuda alinhar="direita">
                 O aporte inicial entra no primeiro mês simulado; o mensal, em todos
@@ -286,10 +280,7 @@ export default function PainelConfiguracoes({
       {/* ── Estratégias ──────────────────────────────────────────────────── */}
       <div className="secao">
         <p className="secao__titulo">
-          <span className="com-icone">
-            <Icone nome="grafico" tamanho={13} />
-            Estratégias
-          </span>
+          <span>Estratégias</span>
           <span className="secao__acoes">
             <button
               className="acao-mini acao-mini--destaque"
@@ -312,10 +303,7 @@ export default function PainelConfiguracoes({
       {/* ── Benchmarks ───────────────────────────────────────────────────── */}
       <div className="secao">
         <p className="secao__titulo">
-          <span className="com-icone">
-            <Icone nome="tendencia" tamanho={13} />
-            Benchmarks
-          </span>
+          <span>Benchmarks</span>
           <span className="secao__acoes">
             <Ajuda alinhar="direita">
               Referências de mercado. Não usam os ativos escolhidos: aplicam a
@@ -329,10 +317,7 @@ export default function PainelConfiguracoes({
       {/* ── Ativos ───────────────────────────────────────────────────────── */}
       <div className="secao">
         <p className="secao__titulo">
-          <span className="com-icone">
-            <Icone nome="carteira" tamanho={13} />
-            Ativos
-          </span>
+          <span>Ativos</span>
           <span className="secao__acoes">
             <span className="tabular">{prefs.ativos.length}</span>
             <Ajuda alinhar="direita">
@@ -545,7 +530,7 @@ export default function PainelConfiguracoes({
             </>
           ) : (
             <>
-              <Icone nome="tendencia" tamanho={16} />
+              <Icone nome="executar" tamanho={16} />
               Simular
             </>
           )}

@@ -6,13 +6,18 @@
  * Tudo aqui era glifo de texto antes (⚙ ✕ ⚠ ◐ ✓ ▸), que renderiza diferente
  * em cada sistema e some quando a fonte não tem o caractere. SVG inline
  * herda a cor do texto, escala sem borrar e não depende de fonte.
+ *
+ * Ponta quadrada e canto vivo de propósito: o traço redondo de 1.6px é o do
+ * Lucide, que está em todo painel gerado por IA. Pontos (do "?", do "i", do
+ * "!") são quadrados cheios, pelo mesmo motivo.
  */
 
 export type NomeIcone =
-  | "ajuda" | "ajustes" | "codigo" | "fechar" | "busca" | "calendario"
+  | "ajuda" | "ajustes" | "codigo" | "fechar" | "busca"
   | "alerta" | "info" | "check" | "carregando" | "expandir" | "recolher"
-  | "tendencia" | "carteira" | "sol" | "lua" | "adicionar" | "grafico"
-  | "duplicar" | "lixeira" | "expandirTela" | "recolherLateral" | "expandirLateral";
+  | "percentual" | "patrimonio" | "sol" | "lua" | "adicionar" | "grafico"
+  | "duplicar" | "lixeira" | "expandirTela" | "recolherLateral" | "expandirLateral"
+  | "executar" | "baixar";
 
 interface Props {
   nome: NomeIcone;
@@ -21,126 +26,96 @@ interface Props {
   className?: string;
 }
 
+const ponto = (x: number, y: number) => (
+  <rect x={x - 0.9} y={y - 0.9} width="1.8" height="1.8" fill="currentColor" stroke="none" />
+);
+
 const CAMINHOS: Record<NomeIcone, React.ReactNode> = {
   ajuda: (
     <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .9-1 1.6v.4" />
-      <path d="M12 17.2v.01" />
+      <circle cx="12" cy="12" r="8.75" />
+      <path d="M9.75 9.75a2.25 2.25 0 1 1 3 2.12c-.45.16-.75.58-.75 1.06v.57" />
+      {ponto(12, 16.5)}
     </>
   ),
+  // Mesa de som: alças quadradas em vez de bolinhas.
   ajustes: (
     <>
-      <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2" />
-      <circle cx="16" cy="6" r="2" />
-      <circle cx="10" cy="12" r="2" />
-      <circle cx="16" cy="18" r="2" />
+      <path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h9M17 17h3" />
+      <rect x="13" y="5" width="4" height="4" />
+      <rect x="7" y="10" width="4" height="4" />
+      <rect x="13" y="15" width="4" height="4" />
     </>
   ),
-  codigo: (
-    <>
-      <path d="M9 7 4 12l5 5" />
-      <path d="m15 7 5 5-5 5" />
-    </>
-  ),
-  fechar: <path d="M6 6l12 12M18 6L6 18" />,
+  // Prompt do interpretador: o código aqui é Python, não HTML.
+  codigo: <path d="M4.5 7l5 5-5 5M12.5 17.5h7" />,
+  fechar: <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
   busca: (
     <>
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m16 16 4 4" />
-    </>
-  ),
-  calendario: (
-    <>
-      <rect x="3.5" y="5" width="17" height="15" rx="2" />
-      <path d="M3.5 10h17M8 3.5v3M16 3.5v3" />
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="M15 15l4.75 4.75" />
     </>
   ),
   alerta: (
     <>
-      <path d="M10.6 4.2 2.9 17.5a1.6 1.6 0 0 0 1.4 2.4h15.4a1.6 1.6 0 0 0 1.4-2.4L13.4 4.2a1.6 1.6 0 0 0-2.8 0Z" />
-      <path d="M12 9.5v4M12 17v.01" />
+      <path d="M12 4.5l8.5 14.75h-17z" />
+      <path d="M12 10v4" />
+      {ponto(12, 16.75)}
     </>
   ),
   info: (
     <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 11v5M12 7.8v.01" />
+      <circle cx="12" cy="12" r="8.75" />
+      <path d="M12 11v5.25" />
+      {ponto(12, 7.9)}
     </>
   ),
-  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   carregando: (
     <>
-      <path d="M12 3.5v4" opacity="1" />
-      <path d="M12 16.5v4" opacity="0.3" />
-      <path d="M20.5 12h-4" opacity="0.75" />
-      <path d="M7.5 12h-4" opacity="0.45" />
-      <path d="m18 6-2.8 2.8" opacity="0.9" />
-      <path d="M8.8 15.2 6 18" opacity="0.35" />
-      <path d="m18 18-2.8-2.8" opacity="0.6" />
-      <path d="M8.8 8.8 6 6" opacity="0.2" />
+      <path d="M12 4v3" opacity="1" />
+      <path d="M12 17v3" opacity="0.3" />
+      <path d="M20 12h-3" opacity="0.75" />
+      <path d="M7 12H4" opacity="0.45" />
+      <path d="M17.66 6.34l-2.12 2.12" opacity="0.9" />
+      <path d="M8.46 15.54l-2.12 2.12" opacity="0.35" />
+      <path d="M17.66 17.66l-2.12-2.12" opacity="0.6" />
+      <path d="M8.46 8.46L6.34 6.34" opacity="0.2" />
     </>
   ),
-  expandir: <path d="m6 9.5 6 6 6-6" />,
-  recolher: <path d="m6 14.5 6-6 6 6" />,
-  tendencia: (
+  expandir: <path d="M6.5 9.5l5.5 5.5 5.5-5.5" />,
+  recolher: <path d="M6.5 14.5L12 9l5.5 5.5" />,
+  // Rentabilidade: é um número em %, não uma seta subindo.
+  percentual: (
     <>
-      <path d="M3.5 16.5 9 11l3.5 3.5L20.5 6.5" />
-      <path d="M15.5 6.5h5v5" />
+      <path d="M18 6L6 18" />
+      <rect x="5.5" y="5.5" width="3.5" height="3.5" />
+      <rect x="15" y="15" width="3.5" height="3.5" />
     </>
   ),
-  carteira: (
-    <>
-      <path d="M3.5 8.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2Z" />
-      <path d="M3.5 9.5h17a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a2.5 2.5 0 0 1 0-5" />
-    </>
-  ),
+  // Patrimônio: camadas que se acumulam a cada aporte.
+  patrimonio: <path d="M4 19.5h16v-4H4zM5.75 15.5v-4h12.5v4M7.5 11.5v-4h9v4" />,
   sol: (
     <>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4" />
+      <circle cx="12" cy="12" r="3.75" />
+      <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.41 1.41M16.95 16.95l1.41 1.41M18.36 5.64l-1.41 1.41M7.05 16.95l-1.41 1.41" />
     </>
   ),
-  lua: <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />,
+  lua: <path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z" />,
   adicionar: <path d="M12 5.5v13M5.5 12h13" />,
-  grafico: (
-    <>
-      <path d="M4 4v15a1 1 0 0 0 1 1h15" />
-      <path d="M8 15.5v-3M12.5 15.5v-7M17 15.5v-5" />
-    </>
-  ),
+  grafico: <path d="M4 4v16h16M7.5 15.5l3.5-4.5 3 2.5 5-6.5" />,
   duplicar: (
     <>
-      <rect x="9" y="9" width="11" height="11" rx="2" />
-      <path d="M5.5 15H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v.5" />
+      <rect x="8.5" y="8.5" width="11" height="11" />
+      <path d="M15.5 5V4.5h-11v11H5" />
     </>
   ),
-  expandirTela: (
-    <>
-      <path d="M9 4H5a1 1 0 0 0-1 1v4" />
-      <path d="M15 4h4a1 1 0 0 1 1 1v4" />
-      <path d="M20 15v4a1 1 0 0 1-1 1h-4" />
-      <path d="M4 15v4a1 1 0 0 0 1 1h4" />
-    </>
-  ),
-  recolherLateral: (
-    <>
-      <path d="M14 6.5 8.5 12l5.5 5.5" />
-    </>
-  ),
-  expandirLateral: (
-    <>
-      <path d="M10 6.5 15.5 12 10 17.5" />
-    </>
-  ),
-  lixeira: (
-    <>
-      <path d="M4 6.5h16" />
-      <path d="M9.5 6.5V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5" />
-      <path d="M6.5 6.5 7.3 19a1 1 0 0 0 1 1h7.4a1 1 0 0 0 1-1l.8-12.5" />
-      <path d="M10.5 10v6M13.5 10v6" />
-    </>
-  ),
+  expandirTela: <path d="M9 4.5H4.5V9M15 4.5h4.5V9M19.5 15v4.5H15M4.5 15v4.5H9" />,
+  recolherLateral: <path d="M14.5 6.5L9 12l5.5 5.5" />,
+  expandirLateral: <path d="M9.5 6.5L15 12l-5.5 5.5" />,
+  lixeira: <path d="M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l.9 13.5h9.2l.9-13.5M10.5 10.5v6M13.5 10.5v6" />,
+  executar: <path d="M7.5 5v14l11-7z" />,
+  baixar: <path d="M12 4.5v10M7.5 10.5L12 15l4.5-4.5M4.5 19.5h15" />,
 };
 
 export default function Icone({ nome, tamanho = 16, className }: Props) {
@@ -151,9 +126,9 @@ export default function Icone({ nome, tamanho = 16, className }: Props) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeWidth="1.5"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
       aria-hidden="true"
       focusable="false"
       className={className}

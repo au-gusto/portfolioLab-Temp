@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Três fatias iguais: a paridade de risco. favicon.ico é gerado desta geometria. -->
+  <rect width="32" height="32" rx="7" fill="#115E59"/>
+  <circle cx="16" cy="16" r="10.5" fill="#E2DCD0"/>
+  <path d="M16 16H28M16 16 10 26.39M16 16 10 5.61" stroke="#115E59" stroke-width="2.4"/>
+</svg>

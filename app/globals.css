@@ -161,7 +161,6 @@ img, video { max-width: 100%; height: auto; }
 
   /* O logo guarda o degradê da marca; o botão é verde, porque "executar" e
      "identidade" são coisas diferentes e não precisam da mesma cor. */
-  --grad-logo: linear-gradient(135deg, #0F766E 0%, #059669 55%, #65A30D 100%);
   --grad-marca: linear-gradient(115deg, #0F766E 0%, #059669 48%, #65A30D 100%);
   --grad-acao: linear-gradient(135deg, #047857 0%, #10B981 100%);
   --grad-fio: linear-gradient(90deg, transparent, #0F766E 18%, #059669 50%, #65A30D 82%, transparent);
@@ -255,7 +254,6 @@ img, video { max-width: 100%; height: auto; }
     --secundaria: #4E9E78;
     --secundaria-forte: #6BB392;
 
-    --grad-logo: linear-gradient(135deg, #3F9D7A 0%, #5AA86A 52%, #8CA858 100%);
     --grad-marca: linear-gradient(115deg, #4A9C7C 0%, #63A76E 52%, #8FA65E 100%);
     --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
     --grad-fio: linear-gradient(90deg, transparent, #3F9D7A 18%, #5AA86A 50%, #8CA858 82%, transparent);
@@ -318,7 +316,6 @@ img, video { max-width: 100%; height: auto; }
   --secundaria: #4E9E78;
   --secundaria-forte: #6BB392;
 
-  --grad-logo: linear-gradient(135deg, #3F9D7A 0%, #5AA86A 52%, #8CA858 100%);
   --grad-marca: linear-gradient(115deg, #4A9C7C 0%, #63A76E 52%, #8FA65E 100%);
   --grad-acao: linear-gradient(135deg, #2F6B50 0%, #3E8A67 100%);
   --grad-fio: linear-gradient(90deg, transparent, #3F9D7A 18%, #5AA86A 50%, #8CA858 82%, transparent);
@@ -1081,9 +1078,6 @@ input[type="date"]::-moz-calendar-picker-indicator {
 
 .vazio__icone {
   display: inline-flex;
-  padding: 14px;
-  border-radius: 50%;
-  background: var(--fundo-elevado);
   color: var(--primaria);
   margin-bottom: 18px;
 }
@@ -1626,20 +1620,8 @@ body {
   pointer-events: none;
 }
 
-/* Bloco do logo. Um quadrado com degradê e o ícone vazado dentro: dá à marca
-   um ponto de fixação visual que o texto sozinho não dava. */
-.cabecalho__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: var(--grad-acao);
-  color: #FFFFFF;
-  flex-shrink: 0;
-  box-shadow: var(--brilho);
-}
+/* A marca é o próprio favicon (app/icon.svg): três fatias iguais. */
+.cabecalho__logo { display: block; flex-shrink: 0; }
 
 .cabecalho__marca { align-items: center; gap: 9px; }
 .cabecalho__marca > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -1896,7 +1878,6 @@ body {
    contido: eles se repetem na tela inteira, e o que aparece muitas vezes tem
    que ser calmo — brilho forte é para o que aparece uma vez. */
 
-.cabecalho__logo { background: var(--grad-logo); }
 
 .botao-primario { box-shadow: var(--brilho-acao); }
 .botao-primario:hover:not(:disabled) { box-shadow: var(--brilho-acao-forte); }

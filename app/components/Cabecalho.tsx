@@ -65,9 +65,8 @@ export default function Cabecalho({
   return (
     <header className="cabecalho">
       <div className="cabecalho__marca">
-        <span className="cabecalho__logo" aria-hidden="true">
-          <Icone nome="grafico" tamanho={16} />
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element -- SVG de 400 bytes, o next/image não tem o que otimizar */}
+        <img className="cabecalho__logo" src="/icon.svg" width={28} height={28} alt="" />
         <div>
           <h1 className="cabecalho__titulo">Portfolio Lab</h1>
           <p className="cabecalho__sub">B3</p>
