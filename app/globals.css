@@ -898,6 +898,12 @@ input[type="date"]::-moz-calendar-picker-indicator {
   .cabecalho__sub { display: none; }
 }
 
+/* No celular o selo da data não cabe ao lado do nome: o título encolhia e o
+   texto em degradê sumia a partir de "Portfol" (medido em 360 e 390px). */
+@media (max-width: 480px) {
+  .selo { display: none; }
+}
+
 /* ══ GRÁFICOS ════════════════════════════════════════════════════════════════ */
 
 .grafico { width: 100%; height: 420px; }
@@ -2628,8 +2634,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   align-items: start;
 }
 
+/* minmax(0, 1fr), não 1fr: 1fr tem mínimo "auto" e a trilha crescia até a
+   tabela nowrap (568px), deixando a página com 621px num celular de 360. */
 @media (max-width: 1100px) {
-  .par-de-paineis { grid-template-columns: 1fr; }
+  .par-de-paineis { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Nessa largura os dois painéis ficam mais baixos: a informação é a forma da
