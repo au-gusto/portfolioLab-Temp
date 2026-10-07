@@ -1,74 +1,74 @@
 {
-  "atualizadoEm": "2026-10-06T02:03:26.499Z",
+  "atualizadoEm": "2026-10-07T01:12:14.387Z",
   "ativos": {
-    "ultimoPregao": "2026-10-05",
+    "ultimoPregao": "2026-10-06",
     "tickers": 89
   },
   "ibrx100": {
-    "ultimoPregao": "2026-10-05",
+    "ultimoPregao": "2026-10-06",
     "tickers": 100
   },
   "cdi": {
-    "ultimoDia": "02/10/2026"
+    "ultimoDia": "05/10/2026"
   },
   "ibov": {
-    "ultimoPregao": "2026-10-05"
+    "ultimoPregao": "2026-10-06"
   },
   "indicesMensais": {
-    "ultimoMes": null
+    "ultimoMes": "2026-08"
   },
   "tickersSemDados": [
     {
       "ticker": "AZUL4",
-      "ultimoPregaoReal": "2026-10-02"
-    },
-    {
-      "ticker": "BRFS3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "CCRO3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
-      "ticker": "CPLE6",
-      "ultimoPregaoReal": "2026-10-02"
+      "ticker": "BRFS3",
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "CRFB3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
-      "ticker": "ELET3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ticker": "CPLE6",
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "EMBR3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "ELET6",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
+    },
+    {
+      "ticker": "ELET3",
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "JBSS3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "MRFG3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "NTCO3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "PETZ3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     },
     {
       "ticker": "STBP3",
-      "ultimoPregaoReal": "2026-10-02"
+      "ultimoPregaoReal": "2026-10-05"
     }
   ],
   "aposentados": []
