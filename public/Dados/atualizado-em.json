@@ -1,5 +1,5 @@
 {
-  "atualizadoEm": "2026-10-14T00:50:40.508Z",
+  "atualizadoEm": "2026-10-15T00:16:55.476Z",
   "ativos": {
     "ultimoPregao": "2026-10-14",
     "tickers": 89
@@ -9,7 +9,7 @@
     "tickers": 100
   },
   "cdi": {
-    "ultimoDia": "09/10/2026"
+    "ultimoDia": "13/10/2026"
   },
   "ibov": {
     "ultimoPregao": "2026-10-14"
@@ -20,55 +20,55 @@
   "tickersSemDados": [
     {
       "ticker": "AZUL4",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "BRFS3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "CCRO3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "CRFB3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "CPLE6",
-      "ultimoPregaoReal": "2026-10-09"
-    },
-    {
-      "ticker": "ELET6",
-      "ultimoPregaoReal": "2026-10-09"
-    },
-    {
-      "ticker": "ELET3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "EMBR3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
+    },
+    {
+      "ticker": "ELET6",
+      "ultimoPregaoReal": "2026-10-14"
+    },
+    {
+      "ticker": "ELET3",
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "JBSS3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "MRFG3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "NTCO3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "PETZ3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     },
     {
       "ticker": "STBP3",
-      "ultimoPregaoReal": "2026-10-09"
+      "ultimoPregaoReal": "2026-10-14"
     }
   ],
   "aposentados": []
