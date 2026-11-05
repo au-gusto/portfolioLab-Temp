@@ -1,5 +1,5 @@
 {
-  "atualizadoEm": "2026-11-04T01:53:12.191Z",
+  "atualizadoEm": "2026-11-05T01:59:28.393Z",
   "ativos": {
     "ultimoPregao": "2026-11-04",
     "tickers": 89
@@ -9,7 +9,7 @@
     "tickers": 100
   },
   "cdi": {
-    "ultimoDia": "30/10/2026"
+    "ultimoDia": "03/11/2026"
   },
   "ibov": {
     "ultimoPregao": "2026-11-04"
@@ -20,55 +20,59 @@
   "tickersSemDados": [
     {
       "ticker": "AZUL4",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "CCRO3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "BRFS3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "CPLE6",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "CRFB3",
-      "ultimoPregaoReal": "2026-10-30"
-    },
-    {
-      "ticker": "ELET6",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "ELET3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "EMBR3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
+    },
+    {
+      "ticker": "ELET6",
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "JBSS3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "MRFG3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "NTCO3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "PETZ3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
+    },
+    {
+      "ticker": "RAIZ4",
+      "ultimoPregaoReal": "2026-11-04"
     },
     {
       "ticker": "STBP3",
-      "ultimoPregaoReal": "2026-10-30"
+      "ultimoPregaoReal": "2026-11-04"
     }
   ],
   "aposentados": []
