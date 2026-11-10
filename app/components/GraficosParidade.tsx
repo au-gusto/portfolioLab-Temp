@@ -50,6 +50,10 @@ export default function GraficosParidade({ alocacao }: Props) {
     return saida;
   }
 
+  // Cor presa ao ativo, não à posição: a pizza ordena por peso e a área segue a
+  // ordem dos ativos, então pelo índice o mesmo papel saía com cores diferentes.
+  const cor = (ativo: string) => CORES[ativos.indexOf(ativo) % CORES.length];
+
   const pizza = ultimo
     ? (() => {
         const p = paraPorcentagem(ultimo.pesos);
@@ -86,7 +90,9 @@ export default function GraficosParidade({ alocacao }: Props) {
                 data={pizza}
                 dataKey="value"
                 nameKey="name"
-                outerRadius="72%"
+                // 62%: com 72% o rótulo da fatia da borda (ex.: "WEGE3 20%") era
+                // cortado no celular.
+                outerRadius="62%"
                 isAnimationActive={false}
                 stroke="var(--fundo-card)"
                 strokeWidth={2}
@@ -98,8 +104,8 @@ export default function GraficosParidade({ alocacao }: Props) {
                 labelLine={false}
                 style={{ fontSize: "11px" }}
               >
-                {pizza.map((_, i) => (
-                  <Cell key={i} fill={CORES[i % CORES.length]} />
+                {pizza.map((fatia) => (
+                  <Cell key={fatia.name} fill={cor(fatia.name)} />
                 ))}
               </Pie>
               <Tooltip contentStyle={estiloTooltip} formatter={(v) => pct(Number(v))} />
@@ -145,11 +151,11 @@ export default function GraficosParidade({ alocacao }: Props) {
                   barras viravam 539 retângulos no DOM, e desenhá-los custava
                   mais de um segundo. Aqui são 7 caminhos, e a leitura de
                   composição ao longo do tempo fica até melhor. */}
-              {ativos.map((a, i) => (
+              {ativos.map((a) => (
                 <Area
                   key={a} type="monotone" dataKey={a} stackId="a"
-                  stroke={CORES[i % CORES.length]}
-                  fill={CORES[i % CORES.length]}
+                  stroke={cor(a)}
+                  fill={cor(a)}
                   fillOpacity={0.85}
                   strokeWidth={0}
                   isAnimationActive={false}

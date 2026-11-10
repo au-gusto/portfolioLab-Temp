@@ -18,12 +18,19 @@
  *   { tipo: "metrica", evento, ... }   <- telemetria de desempenho
  *
  * Protocolo (página -> worker):
- *   { tipo: "iniciar" }
+ *   { tipo: "iniciar", app }          <- app: true no app das lojas
  *   { tipo: "executar", id, codigo, variaveis, perfilar, base }
  */
 
+// Tem que bater com VERSAO em scripts/baixar-pyodide.mjs.
 const VERSAO_PYODIDE = "0.29.3";
-const CDN = `https://cdn.jsdelivr.net/pyodide/v${VERSAO_PYODIDE}/full/`;
+// No site o Python vem do jsDelivr. No app das lojas ele vem de dentro do
+// pacote (public/pyodide/, baixado por scripts/baixar-pyodide.mjs): ver iniciar().
+let CDN = `https://cdn.jsdelivr.net/pyodide/v${VERSAO_PYODIDE}/full/`;
+let modoApp = false;
+// O app tenta as cotações do dia no site e, sem internet, usa as que vieram
+// no pacote. Só os dados ficam velhos; o resto funciona igual.
+const SITE = "https://www.portfoliolab.com.br";
 // numpy e pandas sao obrigatorios: sem eles nenhuma estrategia roda.
 // scipy (14,7 MB, ~7 s) so e usado pelo otimizador da Paridade, entao carrega
 // em segundo plano DEPOIS que a interface ja esta liberada.
@@ -34,7 +41,7 @@ const PACOTE_ADIADO = "scipy";
 // caminho: os CSVs sao gerados uma vez por dia por uma GitHub Action e ficam
 // versionados no repositorio. Menos partes moveis e menos coisa para quebrar.
 const ARQUIVOS_CSV = {
-  ativos: "/Dados/Dados_Ativos_B3_AdjClose.csv",
+  ativos: "/Dados/Dados_Ativos_IBRX100_AdjClose.csv",
   cdi: "/Dados/cdi_data_total.csv",
   ibov: "/Dados/ibov.csv",
   indices: "/Dados/indices_mensais.csv",
@@ -48,7 +55,8 @@ let openpyxlPromise = null;
 // Qual base de precos esta montada em `tabela_precos` neste momento. Trocar de
 // base custa um read_csv (~130 ms), entao os bytes ja baixados ficam em cache:
 // ir e voltar entre Ibovespa e IBRX-100 nao repete o download.
-let baseAtual = "ibov";
+// O boot já monta a base padrão (BASE_PADRAO em app/lib/catalogo-ativos.ts).
+let baseAtual = "ibrx100";
 const bytesPorBase = new Map();
 
 // Remonta `tabela_precos` e `datas_precos` a partir do que estiver gravado em
@@ -73,11 +81,7 @@ async function garantirBase(id, url) {
 
   let bytes = bytesPorBase.get(id);
   if (!bytes) {
-    bytes = await medir(`download da base ${id}`, async () => {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(`base ${id}: HTTP ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
+    bytes = await medir(`download da base ${id}`, async () => new Uint8Array(await baixarDados(url)));
     bytesPorBase.set(id, bytes);
   }
 
@@ -86,6 +90,22 @@ async function garantirBase(id, url) {
     await pyodide.runPythonAsync(PY_REMONTAR_PRECOS);
   });
   baseAtual = id;
+}
+
+/**
+ * Baixa um arquivo de /Dados. No app, tenta primeiro a versão do dia no site
+ * (com prazo curto, para não travar em rede ruim) e cai para a do pacote.
+ */
+async function baixarDados(caminho) {
+  if (modoApp) {
+    try {
+      const r = await fetch(SITE + caminho, { signal: AbortSignal.timeout(4000), cache: "no-store" });
+      if (r.ok) return await r.arrayBuffer();
+    } catch { /* sem internet: segue para a cópia do pacote */ }
+  }
+  const r = await fetch(caminho);
+  if (!r.ok) throw new Error(`${caminho}: HTTP ${r.status}`);
+  return r.arrayBuffer();
 }
 
 /**
@@ -100,6 +120,12 @@ function garantirOpenpyxl() {
     // O openpyxl nao faz parte da distribuicao do Pyodide, entao vem do PyPI
     // pelo micropip. E Python puro: nao ha nada para compilar.
     openpyxlPromise = medir("pacote openpyxl (sob demanda)", async () => {
+      if (modoApp) {
+        // No app as wheels vêm no pacote (extras.json): funciona sem internet.
+        const wheels = await (await fetch(`${CDN}extras.json`)).json();
+        await pyodide.loadPackage(wheels.map((w) => new URL(CDN + w, self.location.href).href));
+        return;
+      }
       await pyodide.loadPackage("micropip");
       await pyodide.runPythonAsync(`
 import micropip
@@ -199,12 +225,16 @@ function animarAte(fase, de, ate, detalhe) {
 
 // ─── Carregamento ─────────────────────────────────────────────────────────────
 
-async function iniciar() {
+async function iniciar(app) {
   const tInicio = performance.now();
+  if (app) {
+    modoApp = true;
+    CDN = new URL("/pyodide/", self.location.href).href;
+  }
   instrumentarFetch();
 
   // 1. Script do Pyodide (~300 KB)
-  let parar = animarAte("runtime", 1, 8, "Conectando ao CDN");
+  let parar = animarAte("runtime", 1, 8, modoApp ? "Abrindo o Python" : "Conectando ao CDN");
   await medir("script do Pyodide", async () => importScripts(`${CDN}pyodide.js`));
   parar();
 
@@ -216,14 +246,16 @@ async function iniciar() {
 
   // 3. Bibliotecas científicas, em paralelo, com contagem individual
   let carregados = 0;
-  const passo = 45 / PACOTES.length;
-  const pararPacotes = animarAte("pacotes", 40, 84, PACOTES.join(", "));
+  // No app o scipy está no pacote (sem download), então já entra junto.
+  const lista = modoApp ? [...PACOTES, PACOTE_ADIADO] : PACOTES;
+  const passo = 45 / lista.length;
+  const pararPacotes = animarAte("pacotes", 40, 84, lista.join(", "));
 
   await Promise.all(
-    PACOTES.map(async (pacote) => {
+    lista.map(async (pacote) => {
       await medir(`pacote ${pacote}`, () => pyodide.loadPackage(pacote));
       carregados++;
-      avisar("pacotes", 40 + carregados * passo, `${pacote} pronto (${carregados}/${PACOTES.length})`);
+      avisar("pacotes", 40 + carregados * passo, `${pacote} pronto (${carregados}/${lista.length})`);
     })
   );
   pararPacotes();
@@ -234,10 +266,10 @@ async function iniciar() {
   //    simulação, em vez de serem reconvertidos de JS a cada clique.
   avisar("dados", 88, "Baixando cotações");
   const [bufAtivos, bufCdi, bufIbov, bufIndices] = await medir("download das cotações", () => Promise.all([
-    fetch(ARQUIVOS_CSV.ativos).then((r) => r.arrayBuffer()),
-    fetch(ARQUIVOS_CSV.cdi).then((r) => r.arrayBuffer()),
-    fetch(ARQUIVOS_CSV.ibov).then((r) => r.arrayBuffer()),
-    fetch(ARQUIVOS_CSV.indices).then((r) => r.arrayBuffer()),
+    baixarDados(ARQUIVOS_CSV.ativos),
+    baixarDados(ARQUIVOS_CSV.cdi),
+    baixarDados(ARQUIVOS_CSV.ibov),
+    baixarDados(ARQUIVOS_CSV.indices),
   ]));
   metrica("carregamento", {
     fase: "tamanho dos CSVs",
@@ -604,7 +636,7 @@ self.onmessage = async (evento) => {
 
   if (msg.tipo === "iniciar") {
     try {
-      await iniciar();
+      await iniciar(msg.app);
     } catch (erro) {
       self.postMessage({ tipo: "falha", mensagem: String(erro?.message || erro) });
     }

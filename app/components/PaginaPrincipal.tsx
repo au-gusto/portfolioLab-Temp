@@ -127,7 +127,25 @@ function normalizarAlocacao(bruto: unknown): AlocacaoMes[] {
     .filter((p) => p.data);
 }
 
-export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, status }: Props) {
+export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, status: statusDoBuild }: Props) {
+  // No app das lojas o status embutido é o do dia do build. Com internet, o
+  // worker usa as cotações do dia do site, então o selo também passa a usar
+  // a data de lá. Sem internet fica a do pacote, e o ponto do selo já avisa
+  // que os dados envelheceram.
+  const [status, setStatus] = useState(statusDoBuild);
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_APP !== "1") return;
+    fetch("https://www.portfoliolab.com.br/Dados/atualizado-em.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const ultimo = j?.ativos?.ultimoPregao;
+        if (ultimo && ultimo > (statusDoBuild.ultimoPregao ?? "")) {
+          setStatus({ atualizadoEm: j.atualizadoEm ?? null, ultimoPregao: ultimo, tickersSemDados: j.tickersSemDados ?? [] });
+        }
+      })
+      .catch(() => {});
+  }, [statusDoBuild]);
+
   const [painelAberto, setPainelAberto] = useState(false);
   const [lateralAberta, setLateralAberta] = useState(false);
 
@@ -787,6 +805,11 @@ export default function PaginaPrincipal({ tickersPorBase, estreiasPorBase, statu
               </div>
             </>
           )}
+          {/* As lojas de apps pedem a política acessível de dentro do app. */}
+          <p style={{ textAlign: "center", fontSize: 13, opacity: 0.7, margin: "24px 0 8px" }}>
+            Simulação educacional com dados do passado, não é recomendação de investimento ·{" "}
+            <a href="/privacidade/">Privacidade</a>
+          </p>
         </main>
       </div>
     </div>

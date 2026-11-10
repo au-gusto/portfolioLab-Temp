@@ -133,7 +133,8 @@ export function iniciarPyodide(): Promise<void> {
     rejeitarPronto?.(new Error(mensagem));
   };
 
-  worker.postMessage({ tipo: "iniciar" });
+  // No app das lojas (build com APP=1) o Python vem de dentro do pacote.
+  worker.postMessage({ tipo: "iniciar", app: process.env.NEXT_PUBLIC_APP === "1" });
   return prontoPromise;
 }
 
