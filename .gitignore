@@ -84,3 +84,10 @@ venv/
 env/
 *.egg-info/
 .ipynb_checkpoints/
+
+# ── App das lojas (Capacitor) ────────────────────────────────────────────────
+# Python baixado por scripts/baixar-pyodide.mjs (35 MB, refeito a cada build).
+/public/pyodide/
+# Chave de assinatura: NUNCA versionar (ver lojas/README.md, "Backup").
+*.keystore
+*.jks

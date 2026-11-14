@@ -1,10 +1,26 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+/** Build do app das lojas (APP=1, ver next.config.ts): o Python vem do pacote. */
+const APP = process.env.NEXT_PUBLIC_APP === "1";
 
 export const metadata: Metadata = {
   title: "Portfolio Lab · B3",
   description: "Comparação entre estratégias de Portfólios no mercado brasileiro",
+  applicationName: "Portfolio Lab",
+  appleWebApp: { capable: true, title: "Portfolio Lab", statusBarStyle: "default" },
+};
+
+// Cor da barra de status no app instalado: a mesma do fundo de cada tema.
+// viewport-fit=cover: no app a página vai até baixo do entalhe e da barra de
+// gestos; o globals.css devolve o espaço com env(safe-area-inset-*).
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#E2DCD0" },
+    { media: "(prefers-color-scheme: dark)", color: "#070A08" },
+  ],
 };
 
 /**
@@ -38,12 +54,10 @@ export default function RootLayout({
         {/* O Pyodide não é carregado aqui — quem o baixa é o worker
             (public/pyodide-worker.js), fora da thread principal. Abrir a
             conexão com o CDN desde já poupa DNS + TLS quando ele pedir. */}
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        {!APP && <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />}
+        {!APP && <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />}
       </head>
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

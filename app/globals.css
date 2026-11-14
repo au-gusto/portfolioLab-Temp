@@ -213,7 +213,7 @@ img, video { max-width: 100%; height: auto; }
 
   /* Medidas repetidas o bastante para merecerem nome */
   --lateral: 340px;
-  --altura-cabecalho: 57px;
+  --altura-cabecalho: calc(57px + var(--seguro-topo));
   --raio-g: 18px;
   --raio: 13px;
   --raio-p: 9px;
@@ -460,10 +460,11 @@ body {
   .painel-configuracoes.mobile-aberto {
     display: block;
     position: fixed;
-    top: 57px; /* altura do cabeçalho */
+    top: var(--altura-cabecalho);
     left: 0;
     width: 100%;
-    height: calc(100vh - 57px);
+    height: calc(100vh - var(--altura-cabecalho));
+    height: calc(100dvh - var(--altura-cabecalho));
     background: var(--fundo-card);
     z-index: 90;
     overflow-y: auto;
@@ -540,7 +541,7 @@ input[type="date"]::-moz-calendar-picker-indicator {
    Desktop: lateral fixa + área de resultados.
    Celular: coluna única; a lateral vira uma gaveta que sobe por cima.        */
 
-.app { min-height: 100vh; }
+.app { min-height: 100vh; min-height: 100dvh; }
 
 .corpo { display: flex; align-items: flex-start; }
 
@@ -551,6 +552,7 @@ input[type="date"]::-moz-calendar-picker-indicator {
   border-right: 1px solid var(--borda);
   padding: 20px;
   height: calc(100vh - var(--altura-cabecalho));
+  height: calc(100dvh - var(--altura-cabecalho));
   overflow-y: auto;
   position: sticky;
   top: var(--altura-cabecalho);
@@ -2647,3 +2649,25 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .par-de-paineis .tabela-metricas th,
 .par-de-paineis .tabela-metricas td { padding: 6px 8px; }
 
+
+/* Página de privacidade (/privacidade): o reset tira tamanhos e marcadores. */
+.texto-legal h1 { font-size: 1.8rem; font-weight: 800; margin: 0.6em 0 0.2em; }
+.texto-legal h2 { font-size: 1.15rem; font-weight: 700; margin: 1.6em 0 0.4em; }
+.texto-legal p, .texto-legal ul { margin: 0.6em 0; }
+.texto-legal ul { padding-left: 1.4em; list-style: disc; }
+.texto-legal a { color: inherit; text-decoration: underline; }
+
+/* ══ APP DAS LOJAS: ÁREAS SEGURAS ════════════════════════════════════════════
+   No app (Capacitor) a página vai até baixo do entalhe e da barra de gestos
+   (viewport-fit=cover no layout). Aqui o espaço volta. O Capacitor no Android
+   publica --safe-area-inset-*; o iOS usa env(). No navegador tudo vale 0. */
+:root {
+  --seguro-topo: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --seguro-baixo: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
+.cabecalho { padding-top: calc(10px + var(--seguro-topo)); }
+body { padding-bottom: var(--seguro-baixo); }
+.gaveta-codigo { padding-top: calc(18px + var(--seguro-topo)); padding-bottom: calc(18px + var(--seguro-baixo)); }
+@media (max-width: 900px) {
+  .gaveta-codigo { padding-top: calc(14px + var(--seguro-topo)); padding-bottom: calc(14px + var(--seguro-baixo)); }
+}

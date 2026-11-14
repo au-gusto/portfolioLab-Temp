@@ -11,9 +11,15 @@
     "dados:validar": "node scripts/validar-dados.mjs",
     "dados:ibrx": "node scripts/sincronizar-ibrx100.mjs",
     "dados:ibrx:simular": "node scripts/sincronizar-ibrx100.mjs --simular",
-    "dados:ibrx:montar": "node scripts/montar-ibrx100.mjs"
+    "dados:ibrx:montar": "node scripts/montar-ibrx100.mjs",
+    "app:build": "node scripts/build-app.mjs",
+    "app:android": "cap open android",
+    "app:ios": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
     "next": "16.1.6",
     "papaparse": "^5.5.3",
     "react": "19.2.3",
@@ -22,6 +28,8 @@
     "yahoo-finance2": "^3.13.2"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
